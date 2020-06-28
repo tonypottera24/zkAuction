@@ -2,13 +2,13 @@
 pragma solidity >=0.4.22 <0.7.0;
 pragma experimental ABIEncoderV2;
 
-import {BigNumber} from "./BigNumber.sol";
+import {ECPointExt} from "./ECPointLib.sol";
 
 struct Auctioneer {
     uint256 index;
     address payable addr;
     uint256 balance;
-    BigNumber.instance elgamalY;
+    ECPointExt elgamalY;
     bool malicious;
 }
 
