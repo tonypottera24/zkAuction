@@ -1,4 +1,4 @@
-# Second price auction smart contract
+# Second price auction
 
 * [Smart contract](https://github.com/tonypottera24/m_second_price_auction_sol)
 * [Web3 client](https://github.com/tonypottera24/m_second_price_auction_py)
