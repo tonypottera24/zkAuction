@@ -10,6 +10,6 @@ struct Timer {
 library TimerLib {
     function timesUp(Timer storage t) internal view returns (bool) {
         if (t.start == 0) return false;
-        return now > t.start + t.duration;
+        return block.timestamp > t.start + t.duration;
     }
 }

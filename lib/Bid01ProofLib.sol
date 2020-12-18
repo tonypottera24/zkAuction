@@ -2,12 +2,11 @@
 pragma solidity >=0.7.0 <0.8.0;
 pragma experimental ABIEncoderV2;
 
-import {Auctioneer} from "./AuctioneerListLib.sol";
+import {ECPointExt, ECPointLib} from "./ECPointLib.sol";
 import {Bidder, BidderList, BidderListLib} from "./BidderListLib.sol";
 import {Ct, CtLib} from "./CtLib.sol";
 import {SameDLProof, SameDLProofLib} from "./SameDLProofLib.sol";
 import {CtSameDLProof, CtSameDLProofLib} from "./CtSameDLProofLib.sol";
-import {ECPointExt, ECPointLib} from "./ECPointLib.sol";
 
 struct Bid01Proof {
     Ct u;
@@ -56,24 +55,22 @@ library Bid01ProofLib {
         return true;
     }
 
-    function stageAIsDecByA(Bid01Proof storage pi, uint256 auctioneer_i)
+    function stageAIsDecByB(Bid01Proof storage pi, uint256 bidder_i)
         internal
         view
         returns (bool)
     {
         return
-            stageA(pi) &&
-            pi.a.isDecByA(auctioneer_i) &&
-            pi.aa.isDecByA(auctioneer_i);
+            stageA(pi) && pi.a.isDecByA(bidder_i) && pi.aa.isDecByA(bidder_i);
     }
 
-    function stageAIsDecByA(Bid01Proof[] storage pi, uint256 auctioneer_i)
+    function stageAIsDecByB(Bid01Proof[] storage pi, uint256 bidder_i)
         internal
         view
         returns (bool)
     {
         for (uint256 i = 0; i < pi.length; i++) {
-            if (stageAIsDecByA(pi[i], auctioneer_i) == false) return false;
+            if (stageAIsDecByB(pi[i], bidder_i) == false) return false;
         }
         return true;
     }
@@ -148,33 +145,33 @@ library Bid01ProofLib {
 
     function setA(
         Bid01Proof storage pi,
-        Auctioneer storage auctioneer,
+        Bidder storage bidder,
         ECPointExt memory uxV,
         SameDLProof memory piVSDL,
         ECPointExt memory uxVV,
         SameDLProof memory piVVSDL
     ) internal {
         require(stageA(pi), "Not in stageA.");
-        pi.a = pi.a.decrypt(auctioneer, uxV, piVSDL);
-        pi.aa = pi.aa.decrypt(auctioneer, uxVV, piVVSDL);
+        pi.a = pi.a.decrypt(bidder, uxV, piVSDL);
+        pi.aa = pi.aa.decrypt(bidder, uxVV, piVVSDL);
     }
 
     function setA(
         Bid01Proof[] storage pi,
-        Auctioneer storage auctioneer,
+        Bidder storage bidder,
         ECPointExt[] memory uxV,
         SameDLProof[] memory piVSDL,
         ECPointExt[] memory uxVV,
         SameDLProof[] memory piVVSDL
     ) internal {
         for (uint256 i = 0; i < pi.length; i++) {
-            setA(pi[i], auctioneer, uxV[i], piVSDL[i], uxVV[i], piVVSDL[i]);
+            setA(pi[i], bidder, uxV[i], piVSDL[i], uxVV[i], piVVSDL[i]);
         }
     }
 
     function valid(Bid01Proof storage pi) internal view returns (bool) {
         if (stageACompleted(pi) == false) return false;
-        return pi.a.c.isZero() || pi.aa.c.isZero();
+        return pi.a.c.isIdentityElement() || pi.aa.c.isIdentityElement();
     }
 
     function valid(Bid01Proof[] storage pi) internal view returns (bool) {

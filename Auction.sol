@@ -2,11 +2,7 @@
 pragma solidity >=0.7.0 <0.8.0;
 pragma experimental ABIEncoderV2;
 
-import {
-    Auctioneer,
-    AuctioneerList,
-    AuctioneerListLib
-} from "./lib/AuctioneerListLib.sol";
+import {ECPointExt, ECPointLib} from "./lib/ECPointLib.sol";
 import {Bidder, BidderList, BidderListLib} from "./lib/BidderListLib.sol";
 import {Ct, CtLib} from "./lib/CtLib.sol";
 import {DLProof, DLProofLib} from "./lib/DLProofLib.sol";
@@ -14,10 +10,9 @@ import {SameDLProof, SameDLProofLib} from "./lib/SameDLProofLib.sol";
 import {CtSameDLProof, CtSameDLProofLib} from "./lib/CtSameDLProofLib.sol";
 import {Bid01Proof, Bid01ProofLib} from "./lib/Bid01ProofLib.sol";
 import {Timer, TimerLib} from "./lib/TimerLib.sol";
-import {ECPointExt, ECPointLib} from "./lib/ECPointLib.sol";
 
 contract Auction {
-    using AuctioneerListLib for AuctioneerList;
+    using ECPointLib for ECPointExt;
     using BidderListLib for BidderList;
     using CtLib for Ct;
     using CtLib for Ct[];
@@ -30,14 +25,15 @@ contract Auction {
     using Bid01ProofLib for Bid01Proof;
     using Bid01ProofLib for Bid01Proof[];
     using TimerLib for Timer;
-    using ECPointLib for ECPointExt;
 
     address payable sellerAddr;
 
-    AuctioneerList aList;
-
-    function getElgamalY() public view returns (ECPointExt[2] memory) {
-        return [aList.get(0).elgamalY, aList.get(1).elgamalY];
+    function getElgamalY() public view returns (ECPointExt[] memory) {
+        ECPointExt[] memory result = new ECPointExt[](bList.length());
+        for (uint256 i = 0; i < bList.length(); i++) {
+            result[i] = bList.get(i).elgamalY;
+        }
+        return result;
     }
 
     BidderList bList;
@@ -135,7 +131,6 @@ contract Auction {
         return price;
     }
 
-    uint256 public auctioneerBalanceLimit;
     uint256 public bidderBalanceLimit;
 
     bool public auctionAborted;
@@ -161,23 +156,11 @@ contract Auction {
     // }
 
     constructor(
-        address payable[2] memory auctioneer_addr,
         address payable _sellerAddr,
         uint256[] memory _price,
         uint256[6] memory duration,
         uint256[2] memory _balanceLimit
-    ) public {
-        require(
-            auctioneer_addr[0] != auctioneer_addr[1],
-            "Auctioneer address must be same."
-        );
-        for (uint256 i = 0; i < 2; i++) {
-            require(
-                auctioneer_addr[i] != address(0),
-                "Auctioneer address must not be zero."
-            );
-            aList.add(auctioneer_addr[i]);
-        }
+    ) {
         require(_sellerAddr != address(0), "seller address == 0");
         sellerAddr = _sellerAddr;
         require(_price.length != 0, "Price list length must not be 0.");
@@ -188,8 +171,8 @@ contract Auction {
             require(duration[i] > 0, "Timer duration must larger than zero.");
             timer[i].duration = duration[i];
         }
-        timer[0].start = now;
-        auctioneerBalanceLimit = _balanceLimit[0];
+        timer[0].start = block.timestamp;
+        timer[1].start = timer[0].start + timer[0].duration;
         bidderBalanceLimit = _balanceLimit[1];
     }
 
@@ -197,45 +180,29 @@ contract Auction {
         return phase1Success() == false;
     }
 
-    function phase1AuctioneerInit(ECPointExt memory elgamalY, DLProof memory pi)
-        public
-        payable
+    function phase1BidderInit(ECPointExt memory elgamalY, DLProof memory pi)
+        public payable
     {
         require(isPhase1(), "Phase 0 not completed yet.");
         require(timer[0].timesUp() == false, "Phase 1 time's up.");
-        Auctioneer storage auctioneer = aList.find(msg.sender);
+        require(elgamalY.isNotSet() == false, "elgamalY must not be zero");
+        require(pi.valid(ECPointLib.g(), elgamalY), "Discrete log proof invalid.");
         require(
-            auctioneer.addr != address(0),
-            "Only pre-defined addresses can become auctioneer."
+            msg.value >= bidderBalanceLimit,
+            "Bidder's deposit must larger than bidderBalanceLimit."
         );
-        require(elgamalY.isSet(), "elgamalY must not be zero");
-        require(
-            pi.valid(ECPointLib.g(), elgamalY),
-            "Discrete log proof invalid."
-        );
-        require(
-            msg.value >= auctioneerBalanceLimit,
-            "Auctioneer's deposit must larger than auctioneerBalanceLimit."
-        );
-        auctioneer.elgamalY = elgamalY;
-        auctioneer.balance = msg.value;
-        if (phase1Success()) {
-            timer[1].start = now;
-            timer[2].start = timer[1].start + timer[1].duration;
-        }
+        bList.init(msg.sender, msg.value, elgamalY);
     }
 
     function phase1Success() public view returns (bool) {
-        return aList.get(0).elgamalY.isSet() && aList.get(1).elgamalY.isSet();
+        return bList.length() > 1 && timer[0].timesUp();
     }
 
     function phase1Resolve() public {
         require(auctionAborted == false, "Problem resolved, auction aborted.");
         require(isPhase1(), "Phase 1 completed successfully.");
         require(timer[0].timesUp(), "Phase 1 still have time to complete.");
-        if (aList.get(0).elgamalY.isNotSet()) aList.get(0).malicious = true;
-        if (aList.get(1).elgamalY.isNotSet()) aList.get(1).malicious = true;
-        compensateAuctioneerMalicious();
+        returnAllBalance();
         auctionAborted = true;
     }
 
@@ -243,30 +210,49 @@ contract Auction {
         return isPhase1() == false && phase2Success() == false;
     }
 
-    function phase2BidderJoin(Ct[] memory bid) public payable {
+    function phase2BidderSubmitBid(Ct[] memory bid) public {
         require(isPhase2(), "Phase 1 not completed yet.");
         require(timer[1].timesUp() == false, "Phase 2 time's up.");
+        Bidder storage bidder = bList.find(msg.sender);
         require(
-            msg.value >= bidderBalanceLimit,
-            "Bidder's deposit must larger than bidderBalanceLimit."
+            bidder.addr != address(0),
+            "Bidder can only submit their bids if they join in phase 1."
         );
         require(
             bid.length == price.length,
             "Bid list's length must equals to bid price list's length."
         );
-        require(bid.isNotDec(), "bid.u1, bid.u2, bid.c must within (0, p)");
-        bList.add(msg.sender, msg.value, bid);
+        require(bid.isNotDec(), "bid is not well encrypted.");
+        for (uint256 j = 0; j < bid.length; j++) {
+            bidder.bid.push(bid[j]);
+            bidder.bidA.push(bid[j]);
+            bidder.bid01Proof.push();
+        }
+        bidder.bid01Proof.setU(bid);
+        bidder.bidSum = bid.sum();
+        require(bidder.bidA.length >= 2, "bidder.bidA.length < 2");
+        for (int256 j = bidder.bidA.length - 2; j >= 0; j--) {
+            // do not use uint256. it will never become negative. the for loop will never stop.
+            bidder.bidA[j] = bidder.bidA[j].add(bidder.bidA[j + 1]);
+        }
+        if (phase2Success()) timer[2].start = block.timestamp;
     }
 
     function phase2Success() public view returns (bool) {
-        return bList.length() > 1 && timer[1].timesUp();
+        for (uint256 i = 0; i < bList.length(); i++) {
+            if (bList.get(i).bid.length != price.length) return false;
+        }
+        return true;
     }
 
     function phase2Resolve() public {
         require(auctionAborted == false, "Problem resolved, auction aborted.");
         require(isPhase2(), "Phase 2 completed successfully.");
         require(timer[1].timesUp(), "Phase 2 still have time to complete.");
-        returnAllBalance();
+        for (uint256 i = 0; i < bList.length(); i++) {
+            if (bList.get(i).bid.length != price.length) bList.get(i).malicious = true;
+        }
+        compensateBidderMalicious();
         auctionAborted = true;
     }
 
@@ -283,22 +269,25 @@ contract Auction {
     ) public {
         require(isPhase3(), "Phase 3 not completed yet.");
         require(timer[2].timesUp() == false, "Phase 3 time's up.");
-        Auctioneer storage auctioneer = aList.find(msg.sender);
+        require(
+            ux.length == bList.length() && pi.length == bList.length(),
+            "Length of bList, ux, pi must be same."
+        );
+        Bidder storage bidder = bList.find(msg.sender);
         for (uint256 i = 0; i < bList.length(); i++) {
             require(
-                bList.get(i).bidSum.isNotDec() ||
-                    bList.get(i).bidSum.isPartialDec(),
+                bList.get(i).bidSum.isFullDec() == false,
                 "Ct has already been decrypted."
             );
             bList.get(i).bidSum = bList.get(i).bidSum.decrypt(
-                auctioneer,
+                bidder,
                 ux[i],
                 pi[i]
             );
         }
         if (phase3Success()) {
             phase4Prepare();
-            timer[3].start = now;
+            timer[3].start = block.timestamp;
         }
     }
 
@@ -310,8 +299,14 @@ contract Auction {
         require(isPhase3(), "Phase 3 not completed yet.");
         require(timer[2].timesUp() == false, "Phase 3 time's up.");
         require(
-            msg.sender == aList.get(1).addr,
-            "Only A2 can call this function."
+            ctV.length == bList.length() &&
+                ctVV.length == bList.length() &&
+                pi.length == bList.length(),
+            "Length of bList, ctV, ctVV, pi must be same."
+        );
+        require(
+            msg.sender == bList.get(0).addr,
+            "Only B0 can call this function."
         );
         for (uint256 i = 0; i < bList.length(); i++) {
             bList.get(i).bid01Proof.setV(ctV[i], ctVV[i], pi[i]);
@@ -326,14 +321,21 @@ contract Auction {
     ) public {
         require(isPhase3(), "Phase 3 not completed yet.");
         require(timer[2].timesUp() == false, "Phase 3 time's up.");
-        Auctioneer storage auctioneer = aList.find(msg.sender);
+        require(
+            uxV.length == bList.length() &&
+                piV.length == bList.length() &&
+                uxVV.length == bList.length() &&
+                piVV.length == bList.length(),
+            "Length of bList, uxV, uxVV, pi must be same."
+        );
+        Bidder storage bidder = bList.find(msg.sender);
         for (uint256 i = 0; i < bList.length(); i++) {
             require(
                 bList.get(i).bid01Proof.length > 0,
                 "bList.get(i).bid01Proof is empty."
             );
             bList.get(i).bid01Proof.setA(
-                auctioneer,
+                bidder,
                 uxV[i],
                 piV[i],
                 uxVV[i],
@@ -342,7 +344,7 @@ contract Auction {
         }
         if (phase3Success()) {
             phase4Prepare();
-            timer[3].start = now;
+            timer[3].start = block.timestamp;
         }
     }
 
@@ -364,46 +366,30 @@ contract Auction {
         require(isPhase3(), "Phase 3 completed successfully.");
         require(timer[2].timesUp(), "Phase 3 still have time to complete.");
         for (uint256 i = 0; i < bList.length(); i++) {
-            if (bList.get(i).bidSum.isDecByA(0) == false)
-                aList.get(0).malicious = true;
-            if (bList.get(i).bidSum.isDecByA(1) == false)
-                aList.get(1).malicious = true;
-            if (bList.get(i).bid01Proof.stageA() == false)
-                aList.get(1).malicious = true;
-            else {
-                if (bList.get(i).bid01Proof.stageAIsDecByA(0) == false)
-                    aList.get(0).malicious = true;
-                if (bList.get(i).bid01Proof.stageAIsDecByA(1) == false)
-                    aList.get(1).malicious = true;
-            }
-            if (aList.get(0).malicious && aList.get(1).malicious) break;
-        }
-        if (aList.malicious()) {
-            compensateAuctioneerMalicious();
-            auctionAborted = true;
-        } else {
-            for (uint256 i = 0; i < bList.length(); i++) {
-                assert(bList.get(i).bidSum.isFullDec());
-                if (bList.get(i).bidSum.c.equals(ECPointLib.z()) == false) {
-                    bList.get(i).malicious = true;
-                    continue;
+            for (uint256 j = 0; j < bList.length(); j++) {
+                if (bList.get(i).bidProd.isDecByB(j) == false) {
+                    bList.get(j).malicious = true;
                 }
-                assert(bList.get(i).bid01Proof.stageACompleted());
-                if (bList.get(i).bid01Proof.valid() == false)
-                    bList.get(i).malicious = true;
-            }
-            if (bList.malicious()) {
-                compensateBidderMalicious();
-                bList.removeMalicious();
-            }
-            if (bList.length() > 0) {
-                phase4Prepare();
-                timer[3].start = now;
-            } else {
-                returnAllBalance();
-                auctionAborted = true;
+                if (bList.get(i).bid01Proof.stageA() == false)
+                bList.get(0).malicious = true;
+                else {
+                    if (bList.get(i).bid01Proof.stageAIsDecByB(j) == false) {
+                        bList.get(j).malicious = true;
+                    }
+                }
             }
         }
+        for (uint256 i = 0; i < bList.length(); i++) {
+            assert(bList.get(i).bidProd.isFullDec());
+            if (bList.get(i).bidProd.c.equals(ECPointLib.z()) == false) {
+                bList.get(i).malicious = true;
+            }
+            assert(bList.get(i).bid01Proof.stageACompleted());
+            if (bList.get(i).bid01Proof.valid() == false)
+                bList.get(i).malicious = true;
+        }
+        compensateBidderMalicious();
+        auctionAborted = true;
     }
 
     function phase4Prepare() internal {
@@ -435,8 +421,14 @@ contract Auction {
         require(isPhase4(), "Phase 4 not completed yet.");
         require(timer[3].timesUp() == false, "Phase 4 time's up.");
         require(
-            msg.sender == aList.get(1).addr,
-            "Only A2 can call this function."
+            ctV.length == bidC01Proof.length &&
+                ctVV.length == bidC01Proof.length &&
+                pi.length == bidC01Proof.length,
+            "Length of bidC01Proof, ctV, ctVV, pi must be same."
+        );
+        require(
+            msg.sender == bList.get(0).addr,
+            "Only B0 can call this function."
         );
         bidC01Proof.setV(ctV, ctVV, pi);
     }
@@ -449,9 +441,9 @@ contract Auction {
     ) public {
         require(isPhase4(), "Phase 4 not completed yet.");
         require(timer[3].timesUp() == false, "Phase 4 time's up.");
-        Auctioneer storage auctioneer = aList.find(msg.sender);
+        Bidder storage bidder = bList.find(msg.sender);
         bidC01Proof[secondHighestBidPriceJ].setA(
-            auctioneer,
+            bidder,
             uxV,
             piV,
             uxVV,
@@ -466,7 +458,7 @@ contract Auction {
             }
             secondHighestBidPriceJ = (binarySearchL + binarySearchR) / 2;
         }
-        if (phase4Success()) timer[4].start = now;
+        if (phase4Success()) timer[4].start = block.timestamp;
     }
 
     function phase4Success() public view returns (bool) {
@@ -479,14 +471,14 @@ contract Auction {
         require(isPhase4(), "Phase 4 completed successfully.");
         require(timer[3].timesUp(), "Phase 4 still have time to complete.");
         if (bidC01Proof.stageA() == false) {
-            aList.get(1).malicious = true;
+            bList.get(1).malicious = true;
         } else {
-            if (bidC01Proof.stageAIsDecByA(0) == false)
-                aList.get(0).malicious = true;
-            if (bidC01Proof.stageAIsDecByA(1) == false)
-                aList.get(1).malicious = true;
+            for (uint256 i = 0; i < bList.length(); i++) {
+                if (bidC01Proof.stageAIsDecByB(i) == false)
+                    bList.get(i).malicious = true;
+            }
         }
-        compensateAuctioneerMalicious();
+        compensateBidderMalicious();
         auctionAborted = true;
     }
 
@@ -505,32 +497,29 @@ contract Auction {
     ) public {
         require(isPhase5(), "Phase 5 not completed yet.");
         require(timer[4].timesUp() == false, "Phase 5 time's up.");
-        Auctioneer storage auctioneer = aList.find(msg.sender);
+        require(
+            ux.length == bList.length() && pi.length == bList.length(),
+            "Length of bList, ux, pi must be same."
+        );
+        Bidder storage bidder = bList.find(msg.sender);
         for (uint256 i = 0; i < bList.length(); i++) {
             bList.get(i).bidA[secondHighestBidPriceJ + 1] = bList
                 .get(i)
                 .bidA[secondHighestBidPriceJ + 1]
-                .decrypt(auctioneer, ux[i], pi[i]);
+                .decrypt(bidder, ux[i], pi[i]);
             if (
                 bList.get(i).bidA[secondHighestBidPriceJ + 1].isFullDec() &&
-                bList.get(i).bidA[secondHighestBidPriceJ + 1].c.equals(
-                    ECPointLib.z()
-                )
+                bList.get(i).bidA[secondHighestBidPriceJ + 1].c.equals(ECPointLib.z())
             ) {
                 winnerI = i;
             }
         }
-        if (phase5Success()) timer[5].start = now;
+        if (phase5Success()) timer[5].start = block.timestamp;
     }
 
     function phase5Success() public view returns (bool) {
         for (uint256 i = 0; i < bList.length(); i++) {
-            if (
-                bList.get(i).bidA[secondHighestBidPriceJ + 1].isFullDec() &&
-                bList.get(i).bidA[secondHighestBidPriceJ + 1].c.equals(
-                    ECPointLib.z()
-                )
-            ) {
+            if (bList.get(i).bidA[secondHighestBidPriceJ + 1].isFullDec()) {
                 return true;
             }
         }
@@ -542,19 +531,12 @@ contract Auction {
         require(isPhase5(), "Phase 5 completed successfully.");
         require(timer[4].timesUp(), "Phase 5 still have time to complete.");
         for (uint256 i = 0; i < bList.length(); i++) {
-            if (
-                bList.get(winnerI).bidA[secondHighestBidPriceJ + 1].isDecByA(
-                    0
-                ) == false
-            ) aList.get(0).malicious = true;
-            if (
-                bList.get(winnerI).bidA[secondHighestBidPriceJ + 1].isDecByA(
-                    1
-                ) == false
-            ) aList.get(1).malicious = true;
-            if (aList.get(0).malicious && aList.get(1).malicious) break;
+            for (uint256 j = 0; j < bList.length(); j++) {
+                if (bList.get(winnerI).bidA[secondHighestBidPriceJ + 1].isDecByB(j) == false)
+                    bList.get(j).malicious = true;
+            }
         }
-        compensateAuctioneerMalicious();
+        compensateBidderMalicious();
         auctionAborted = true;
     }
 
@@ -585,21 +567,15 @@ contract Auction {
 
     function getBalance() public view returns (uint256[] memory) {
         uint256[] memory result = new uint256[](
-            aList.length() + bList.length()
+            bList.length()
         );
-        for (uint256 i = 0; i < aList.length(); i++) {
-            result[i] = aList.get(i).balance;
-        }
         for (uint256 i = 0; i < bList.length(); i++) {
-            result[i + aList.length()] = bList.get(i).balance;
+            result[i] = bList.get(i).balance;
         }
         return result;
     }
 
     function phase6Success() public view returns (bool) {
-        for (uint256 i = 0; i < aList.length(); i++) {
-            if (aList.get(i).balance > 0) return false;
-        }
         for (uint256 i = 0; i < bList.length(); i++) {
             if (bList.get(i).balance > 0) return false;
         }
@@ -612,19 +588,11 @@ contract Auction {
         require(timer[5].timesUp(), "Phase 6 still have time to complete.");
         bList.get(winnerI).malicious = true;
         compensateBidderMalicious();
-        bList.removeMalicious();
-        returnAllBalance();
         auctionAborted = true;
     }
 
     function returnAllBalance() internal {
-        require(aList.malicious() == false && bList.malicious() == false);
-        for (uint256 i = 0; i < aList.length(); i++) {
-            if (aList.get(i).balance > 0) {
-                aList.get(i).addr.transfer(aList.get(i).balance);
-                aList.get(i).balance = 0;
-            }
-        }
+        require(bList.malicious() == false);
         for (uint256 i = 0; i < bList.length(); i++) {
             if (bList.get(i).balance > 0) {
                 bList.get(i).addr.transfer(bList.get(i).balance);
@@ -633,34 +601,10 @@ contract Auction {
         }
     }
 
-    function compensateAuctioneerMalicious() internal {
-        require(aList.malicious(), "Auctioneers are not malicious.");
-        uint256 d;
-        for (uint256 i = 0; i < aList.length(); i++) {
-            if (aList.get(i).malicious) {
-                d += aList.get(i).balance;
-                aList.get(i).balance = 0;
-            }
-        }
-        if (aList.get(0).malicious && aList.get(1).malicious)
-            d /= bList.length();
-        else d /= 1 + bList.length();
-        for (uint256 i = 0; i < aList.length(); i++) {
-            if (aList.get(i).malicious == false) {
-                aList.get(i).addr.transfer(d + aList.get(i).balance);
-                aList.get(i).balance = 0;
-            }
-        }
-        for (uint256 i = 0; i < bList.length(); i++) {
-            bList.get(i).addr.transfer(d + bList.get(i).balance);
-            bList.get(i).balance = 0;
-        }
-    }
-
     function compensateBidderMalicious() internal {
         require(bList.malicious(), "Bidders are not malicious.");
-        uint256 d;
-        uint256 maliciousBidderCount;
+        uint256 d = 0;
+        uint256 maliciousBidderCount = 0;
         for (uint256 i = 0; i < bList.length(); i++) {
             if (bList.get(i).malicious) {
                 d += bList.get(i).balance;
@@ -668,9 +612,7 @@ contract Auction {
                 maliciousBidderCount++;
             }
         }
-        d /= aList.length() + bList.length() - maliciousBidderCount;
-        aList.get(0).addr.transfer(d);
-        aList.get(1).addr.transfer(d);
+        d /= bList.length() - maliciousBidderCount;
         for (uint256 i = 0; i < bList.length(); i++) {
             if (bList.get(i).malicious == false) bList.get(i).addr.transfer(d);
         }

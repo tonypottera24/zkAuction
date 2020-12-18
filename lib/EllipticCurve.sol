@@ -9,7 +9,7 @@ pragma solidity >=0.7.0 <0.8.0;
  * @author Witnet Foundation
  */
 library EllipticCurve {
-    /// Pre-computed constant for 2 ** 255
+    // Pre-computed constant for 2 ** 255
     uint256
         private constant U255_MAX_PLUS_1 = 57896044618658097711785492504343953926634992332820282019728792003956564819968;
 
