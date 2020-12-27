@@ -9,7 +9,7 @@ import {Bid01Proof, Bid01ProofLib} from "./Bid01ProofLib.sol";
 
 struct Bidder {
     uint256 index;
-    address payable addr;
+    address addr;
     uint256 balance;
     bool malicious;
     ECPointExt elgamalY;
@@ -32,9 +32,9 @@ library BidderListLib {
 
     function init(
         BidderList storage bList,
-        address payable addr,
+        address addr,
         uint256 balance,
-        ECPointExt elgamalY
+        ECPointExt memory elgamalY
     ) internal {
         bList.list.push();
         bList.map[addr] = bList.list.length - 1;
@@ -74,13 +74,4 @@ library BidderListLib {
         }
         return false;
     }
-
-    // function removeMalicious(BidderList storage bList) internal {
-    //     for (uint256 i = 0; i < length(bList); i++) {
-    //         if (get(bList, i).malicious) {
-    //             remove(bList, i);
-    //             i--;
-    //         }
-    //     }
-    // }
 }

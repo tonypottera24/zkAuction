@@ -36,8 +36,8 @@ library Bid01ProofLib {
 
     function stageV(Bid01Proof storage pi) internal view returns (bool) {
         return
-            pi.u.isSet() &&
-            pi.uu.isSet() &&
+            pi.u.isNotSet() == false &&
+            pi.uu.isNotSet() == false &&
             pi.v.isNotSet() &&
             pi.vv.isNotSet() &&
             pi.a.isNotSet() &&
@@ -45,7 +45,11 @@ library Bid01ProofLib {
     }
 
     function stageA(Bid01Proof storage pi) internal view returns (bool) {
-        return pi.u.isSet() && pi.uu.isSet() && pi.v.isSet() && pi.vv.isSet();
+        return
+            pi.u.isNotSet() == false &&
+            pi.uu.isNotSet() == false &&
+            pi.v.isNotSet() == false &&
+            pi.vv.isNotSet() == false;
     }
 
     function stageA(Bid01Proof[] storage pi) internal view returns (bool) {
@@ -61,7 +65,7 @@ library Bid01ProofLib {
         returns (bool)
     {
         return
-            stageA(pi) && pi.a.isDecByA(bidder_i) && pi.aa.isDecByA(bidder_i);
+            stageA(pi) && pi.a.isDecByB(bidder_i) && pi.aa.isDecByB(bidder_i);
     }
 
     function stageAIsDecByB(Bid01Proof[] storage pi, uint256 bidder_i)
@@ -81,10 +85,10 @@ library Bid01ProofLib {
         returns (bool)
     {
         return
-            pi.u.isSet() &&
-            pi.uu.isSet() &&
-            pi.v.isSet() &&
-            pi.vv.isSet() &&
+            pi.u.isNotSet() == false &&
+            pi.uu.isNotSet() == false &&
+            pi.v.isNotSet() == false &&
+            pi.vv.isNotSet() == false &&
             pi.a.isFullDec() &&
             pi.aa.isFullDec();
     }
@@ -103,7 +107,8 @@ library Bid01ProofLib {
     function setU(Bid01Proof storage pi, Ct memory bidU) internal {
         require(stageU(pi), "Not in stageU.");
         require(bidU.isNotDec(), "bidU not been decrypted yet.");
-        (pi.u, pi.uu) = (bidU, bidU.subZ());
+        pi.u.set(bidU);
+        pi.uu.set(bidU.subZ());
     }
 
     function setU(Bid01Proof[] storage pi, Ct[] memory bidU) internal {
@@ -128,8 +133,10 @@ library Bid01ProofLib {
             piSDL.valid(pi.u, pi.uu, ctV, ctVV),
             "Same discrete log verification failed."
         );
-        (pi.v, pi.vv) = (ctV, ctVV);
-        (pi.a, pi.aa) = (ctV, ctVV);
+        pi.v.set(ctV);
+        pi.vv.set(ctVV);
+        pi.a.set(ctV);
+        pi.aa.set(ctVV);
     }
 
     function setV(
@@ -152,8 +159,8 @@ library Bid01ProofLib {
         SameDLProof memory piVVSDL
     ) internal {
         require(stageA(pi), "Not in stageA.");
-        pi.a = pi.a.decrypt(bidder, uxV, piVSDL);
-        pi.aa = pi.aa.decrypt(bidder, uxVV, piVVSDL);
+        pi.a.set(pi.a.decrypt(bidder, uxV, piVSDL));
+        pi.aa.set(pi.aa.decrypt(bidder, uxVV, piVVSDL));
     }
 
     function setA(

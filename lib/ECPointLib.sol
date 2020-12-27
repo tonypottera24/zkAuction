@@ -13,16 +13,16 @@ struct ECPointExt {
 library ECPointLib {
     using UIntLib for uint256;
 
-    uint256
-        public constant GX = 48439561293906451759052585252797914202762949526041747995844080717082404635286;
-    uint256
-        public constant GY = 36134250956749795798585127919587881956611106672985015071877198253568414405109;
-    uint256
-        public constant AA = 115792089210356248762697446949407573530086143415290314195533631308867097853948;
-    uint256
-        public constant BB = 41058363725152142129326129780047268409114441015993725554835256314039467401291;
-    uint256
-        public constant PP = 115792089210356248762697446949407573530086143415290314195533631308867097853951;
+    uint256 public constant GX =
+        48439561293906451759052585252797914202762949526041747995844080717082404635286;
+    uint256 public constant GY =
+        36134250956749795798585127919587881956611106672985015071877198253568414405109;
+    uint256 public constant AA =
+        115792089210356248762697446949407573530086143415290314195533631308867097853948;
+    uint256 public constant BB =
+        41058363725152142129326129780047268409114441015993725554835256314039467401291;
+    uint256 public constant PP =
+        115792089210356248762697446949407573530086143415290314195533631308867097853951;
 
     function zero() internal pure returns (ECPointExt memory) {
         return ECPointExt(0, 1);
@@ -42,7 +42,7 @@ library ECPointLib {
 
     function isNotSet(ECPointExt[] memory pt) internal pure returns (bool) {
         for (uint256 i = 0; i < pt.length; i++) {
-            if (isNotSet(pt) == false) return false;
+            if (isNotSet(pt[i]) == false) return false;
         }
         return true;
     }
@@ -90,14 +90,8 @@ library ECPointLib {
     {
         if (isNotSet(pt1) || isIdentityElement(pt1)) return pt2;
         if (isNotSet(pt2) || isIdentityElement(pt2)) return pt1;
-        (uint256 x, uint256 y) = EllipticCurve.ecAdd(
-            pt1.x,
-            pt1.y,
-            pt2.x,
-            pt2.y,
-            AA,
-            PP
-        );
+        (uint256 x, uint256 y) =
+            EllipticCurve.ecAdd(pt1.x, pt1.y, pt2.x, pt2.y, AA, PP);
         return ECPointExt(x, y);
     }
 
@@ -121,14 +115,8 @@ library ECPointLib {
     {
         if (isNotSet(pt2)) return pt1;
         if (isIdentityElement(pt2)) return pt1;
-        (uint256 x, uint256 y) = EllipticCurve.ecSub(
-            pt1.x,
-            pt1.y,
-            pt2.x,
-            pt2.y,
-            AA,
-            PP
-        );
+        (uint256 x, uint256 y) =
+            EllipticCurve.ecSub(pt1.x, pt1.y, pt2.x, pt2.y, AA, PP);
         return ECPointExt(x, y);
     }
 
