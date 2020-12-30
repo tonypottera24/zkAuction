@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.4.22 <0.7.0;
+pragma solidity >=0.7.0 <0.8.0;
 pragma experimental ABIEncoderV2;
 
 struct Timer {
@@ -10,6 +10,6 @@ struct Timer {
 library TimerLib {
     function timesUp(Timer storage t) internal view returns (bool) {
         if (t.start == 0) return false;
-        return now > t.start + t.duration;
+        return block.timestamp > t.start + t.duration;
     }
 }

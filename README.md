@@ -10,4 +10,4 @@
 * [Smart contract](https://github.com/tonypottera24/m-1st_auction_ec_sol)
 * [Web3 client](https://github.com/tonypottera24/m-1st_auction_ec_py)
 
-This scheme used two auctioneers.
+This scheme do not need auctioneers.
