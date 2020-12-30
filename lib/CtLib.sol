@@ -1,28 +1,38 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.4.22 <0.7.0;
+pragma solidity >=0.7.0 <0.8.0;
 pragma experimental ABIEncoderV2;
 
-import {Auctioneer} from "./AuctioneerListLib.sol";
+import {Bidder, BidderList, BidderListLib} from "./BidderListLib.sol";
 import {SameDLProof, SameDLProofLib} from "./SameDLProofLib.sol";
 import {ECPointExt, ECPointLib} from "./ECPointLib.sol";
 
 struct Ct {
-    ECPointExt u1;
-    ECPointExt u2;
+    ECPointExt[] u;
     ECPointExt c;
 }
 
 library CtLib {
     using ECPointLib for ECPointExt;
+    using ECPointLib for ECPointExt[];
     using SameDLProofLib for SameDLProof;
     using SameDLProofLib for SameDLProof[];
 
-    function isSet(Ct memory ct) internal pure returns (bool) {
-        return ct.u1.isSet() || ct.u2.isSet() || ct.c.isSet();
+    function set(Ct storage ct1, Ct memory ct2) internal {
+        for (uint256 i = 0; i < ct2.u.length; i++) {
+            if (ct1.u.length < i + 1) ct1.u.push();
+            ct1.u[i] = ct2.u[i];
+        }
+        ct1.c = ct2.c;
     }
 
+    // function set(Ct[] storage ct1, Ct[] memory ct2) internal {
+    //     for (uint256 i = 0; i < ct2.length; i++) {
+    //         set(ct1[i], ct2[i]);
+    //     }
+    // }
+
     function isNotSet(Ct memory ct) internal pure returns (bool) {
-        return isSet(ct) == false;
+        return ct.u.isNotSet() && ct.c.isNotSet();
     }
 
     function isNotSet(Ct[] memory ct) internal pure returns (bool) {
@@ -33,7 +43,10 @@ library CtLib {
     }
 
     function isNotDec(Ct memory ct) internal pure returns (bool) {
-        return ct.u1.isSet() && ct.u2.isSet() && ct.c.isSet();
+        for (uint256 i = 0; i < ct.u.length; i++) {
+            if (ct.u[i].isNotSet() == true) return false;
+        }
+        return true;
     }
 
     function isNotDec(Ct[] memory ct) internal pure returns (bool) {
@@ -43,38 +56,27 @@ library CtLib {
         return true;
     }
 
-    function isPartialDec(Ct memory ct) internal pure returns (bool) {
-        return
-            (ct.u1.isSet() && ct.u2.isNotSet()) ||
-            (ct.u1.isNotSet() && ct.u2.isSet());
+    function isDecByB(Ct memory ct, uint256 bidder_i)
+        internal
+        pure
+        returns (bool)
+    {
+        return ct.u[bidder_i].isNotSet();
     }
 
-    function isPartialDec(Ct[] memory ct) internal pure returns (bool) {
-        for (uint256 i = 0; i < ct.length; i++) {
-            if (isPartialDec(ct[i]) == false) return false;
-        }
-        return true;
-    }
-
-    function isDecByA(Ct memory ct, uint256 i) internal pure returns (bool) {
-        require(i == 0 || i == 1, "i can only be 0 or 1.");
-        if (i == 0) return ct.u1.isNotSet();
-        else return ct.u2.isNotSet();
-    }
-
-    function isDecByA(Ct[] memory ct, uint256 auctioneer_i)
+    function isDecByB(Ct[] memory ct, uint256 bidder_i)
         internal
         pure
         returns (bool)
     {
         for (uint256 i = 0; i < ct.length; i++) {
-            if (isDecByA(ct[i], auctioneer_i) == false) return false;
+            if (isDecByB(ct[i], bidder_i) == false) return false;
         }
         return true;
     }
 
     function isFullDec(Ct memory ct) internal pure returns (bool) {
-        return ct.u1.isNotSet() && ct.u2.isNotSet();
+        return ct.u.isNotSet();
     }
 
     function isFullDec(Ct[] memory ct) internal pure returns (bool) {
@@ -89,11 +91,11 @@ library CtLib {
         pure
         returns (Ct memory)
     {
-        return Ct(ct1.u1.add(ct2.u1), ct1.u2.add(ct2.u2), ct1.c.add(ct2.c));
+        return Ct(ct1.u.add(ct2.u), ct1.c.add(ct2.c));
     }
 
     function subZ(Ct memory ct) internal pure returns (Ct memory) {
-        return Ct(ct.u1, ct.u2, ct.c.sub(ECPointLib.z()));
+        return Ct(ct.u, ct.c.sub(ECPointLib.z()));
     }
 
     function subZ(Ct[] memory ct) internal pure returns (Ct[] memory) {
@@ -105,10 +107,7 @@ library CtLib {
     }
 
     function equals(Ct memory ct1, Ct memory ct2) internal pure returns (bool) {
-        return
-            ct1.u1.equals(ct2.u1) &&
-            ct1.u2.equals(ct2.u2) &&
-            ct1.c.equals(ct2.c);
+        return ct1.u.equals(ct2.u) && ct1.c.equals(ct2.c);
     }
 
     function sum(Ct[] memory ct) internal pure returns (Ct memory result) {
@@ -122,37 +121,31 @@ library CtLib {
 
     function decrypt(
         Ct memory ct,
-        Auctioneer storage a,
+        Bidder storage bidder,
         ECPointExt memory ux,
         SameDLProof memory pi
     ) internal view returns (Ct memory) {
-        require(a.index == 0 || a.index == 1, "a.index can only be 0 or 1");
-        if (a.index == 0) {
-            require(ct.u1.isSet(), "ct.u1 should not be zero.");
-            require(
-                pi.valid(ct.u1, ECPointLib.g(), ux, a.elgamalY),
-                "Same discrete log verification failed."
-            );
-            return Ct(ECPointExt(0, 0), ct.u2, ct.c.sub(ux));
-        } else {
-            require(ct.u2.isSet(), "ct.u2 should not be zero.");
-            require(
-                pi.valid(ct.u2, ECPointLib.g(), ux, a.elgamalY),
-                "Same discrete log verification failed."
-            );
-            return Ct(ct.u1, ECPointExt(0, 0), ct.c.sub(ux));
-        }
+        require(
+            ct.u[bidder.index].isNotSet() == false,
+            "ct.u1 should not be zero."
+        );
+        require(
+            pi.valid(ct.u[bidder.index], ECPointLib.g(), ux, bidder.elgamalY),
+            "Same discrete log verification failed."
+        );
+        ct.u[bidder.index] = ECPointExt(0, 0);
+        return Ct(ct.u, ct.c.sub(ux));
     }
 
     function decrypt(
         Ct[] memory ct,
-        Auctioneer storage a,
+        Bidder storage bidder,
         ECPointExt[] memory ux,
         SameDLProof[] memory pi
     ) internal view returns (Ct[] memory) {
         Ct[] memory result = new Ct[](ct.length);
         for (uint256 i = 0; i < ct.length; i++) {
-            result[i] = decrypt(ct[i], a, ux[i], pi[i]);
+            result[i] = decrypt(ct[i], bidder, ux[i], pi[i]);
         }
         return result;
     }
