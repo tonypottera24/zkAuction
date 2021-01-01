@@ -6,7 +6,7 @@ import {Ct, CtLib} from "./CtLib.sol";
 import {SameDLProof, SameDLProofLib} from "./SameDLProofLib.sol";
 
 struct CtSameDLProof {
-    SameDLProof[] u;
+    SameDLProof u;
     SameDLProof c;
 }
 
@@ -22,12 +22,9 @@ library CtSameDLProofLib {
         Ct memory y1,
         Ct memory y2
     ) internal view returns (bool) {
-        for (uint256 i = 0; i < pi.u.length; i++) {
-            if (pi.u[i].valid(g1.u[i], g2.u[i], y1.u[i], y2.u[i]) == false) {
-                return false;
-            }
-        }
-        return pi.c.valid(g1.c, g2.c, y1.c, y2.c);
+        return
+            pi.u.valid(g1.u, g2.u, y1.u, y2.u) &&
+            pi.c.valid(g1.c, g2.c, y1.c, y2.c);
     }
 
     function valid(

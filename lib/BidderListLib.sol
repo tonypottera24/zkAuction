@@ -13,10 +13,12 @@ struct Bidder {
     uint256 balance;
     bool malicious;
     ECPointExt elgamalY;
-    Ct[] bid;
     Ct bidSum;
+    bool hasDecBidSum;
     Bid01Proof[] bid01Proof;
+    bool hasDecBid01Proof;
     Ct[] bidA;
+    bool hasDecBidA;
 }
 
 struct BidderList {
@@ -73,5 +75,34 @@ library BidderListLib {
             if (get(bList, i).malicious) return true;
         }
         return false;
+    }
+
+    function hasDecBidSum(BidderList storage bList)
+        internal
+        view
+        returns (bool)
+    {
+        for (uint256 i = 0; i < length(bList); i++) {
+            if (get(bList, i).hasDecBidSum == false) return false;
+        }
+        return true;
+    }
+
+    function hasDecBid01Proof(BidderList storage bList)
+        internal
+        view
+        returns (bool)
+    {
+        for (uint256 i = 0; i < length(bList); i++) {
+            if (get(bList, i).hasDecBid01Proof == false) return false;
+        }
+        return true;
+    }
+
+    function hasDecBidA(BidderList storage bList) internal view returns (bool) {
+        for (uint256 i = 0; i < length(bList); i++) {
+            if (get(bList, i).hasDecBidA == false) return false;
+        }
+        return true;
     }
 }
