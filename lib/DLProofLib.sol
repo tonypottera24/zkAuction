@@ -2,24 +2,26 @@
 pragma solidity >=0.7.0 <0.8.0;
 pragma experimental ABIEncoderV2;
 
-import {ECPointExt, ECPointLib} from "./ECPointLib.sol";
+import {UIntLib} from "./UIntLib.sol";
+import {ECPoint, ECPointLib} from "./ECPointLib.sol";
 
 struct DLProof {
-    ECPointExt t;
-    uint256 r;
+    ECPoint grr;
+    uint256 rrr;
 }
 
 library DLProofLib {
-    using ECPointLib for ECPointExt;
+    using UIntLib for uint256;
+    using ECPointLib for ECPoint;
 
     function valid(
         DLProof memory pi,
-        ECPointExt memory g,
-        ECPointExt memory y
+        ECPoint memory g,
+        ECPoint memory y
     ) internal pure returns (bool) {
         bytes32 digest =
-            keccak256(abi.encodePacked(g.pack(), y.pack(), pi.t.pack()));
-        uint256 c = uint256(digest);
-        return pi.t.equals(g.scalar(pi.r).add(y.scalar(c)));
+            keccak256(abi.encodePacked(g.pack(), y.pack(), pi.grr.pack()));
+        uint256 c = uint256(digest).modQ();
+        return g.scalar(pi.rrr).equals(pi.grr.add(y.scalar(c)));
     }
 }

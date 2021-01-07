@@ -5,7 +5,7 @@ pragma experimental ABIEncoderV2;
 import {UIntLib} from "./UIntLib.sol";
 import {EllipticCurve} from "./EllipticCurve.sol";
 
-struct ECPointExt {
+struct ECPoint {
     uint256 x;
     uint256 y;
 }
@@ -23,41 +23,41 @@ library ECPointLib {
         41058363725152142129326129780047268409114441015993725554835256314039467401291;
     uint256 public constant PP =
         115792089210356248762697446949407573530086143415290314195533631308867097853951;
+    uint256 public constant QQ =
+        115792089210356248762697446949407573529996955224135760342422259061068512044369;
 
-    function zero() internal pure returns (ECPointExt memory) {
-        return ECPointExt(0, 1);
+    function zero() internal pure returns (ECPoint memory) {
+        return ECPoint(0, 1);
     }
 
-    function g() internal pure returns (ECPointExt memory) {
-        return ECPointExt(GX, GY);
+    function g() internal pure returns (ECPoint memory) {
+        return ECPoint(GX, GY);
     }
 
-    function z() internal pure returns (ECPointExt memory) {
+    function z() internal pure returns (ECPoint memory) {
         return scalar(g(), 2);
     }
 
-    function isNotSet(ECPointExt memory pt) internal pure returns (bool) {
-        return pt.x.isZero(PP) && pt.y.isZero(PP);
+    function isNotSet(ECPoint memory pt) internal pure returns (bool) {
+        return pt.x.isZero() && pt.y.isZero();
     }
 
-    function isNotSet(ECPointExt[] memory pt) internal pure returns (bool) {
+    function isNotSet(ECPoint[] memory pt) internal pure returns (bool) {
         for (uint256 i = 0; i < pt.length; i++) {
             if (isNotSet(pt[i]) == false) return false;
         }
         return true;
     }
 
-    function equals(ECPointExt memory pt1, ECPointExt memory pt2)
+    function equals(ECPoint memory pt1, ECPoint memory pt2)
         internal
         pure
         returns (bool)
     {
-        if (isNotSet(pt1) && isNotSet(pt2)) return true;
-        if (isNotSet(pt1) || isNotSet(pt2)) return false;
-        return pt1.x.equals(pt2.x, PP) && pt1.y.equals(pt2.y, PP);
+        return pt1.x == pt2.x && pt1.y == pt2.y;
     }
 
-    function equals(ECPointExt[] memory pt1, ECPointExt[] memory pt2)
+    function equals(ECPoint[] memory pt1, ECPoint[] memory pt2)
         internal
         pure
         returns (bool)
@@ -69,66 +69,63 @@ library ECPointLib {
         return true;
     }
 
-    function isIdentityElement(ECPointExt memory pt)
-        internal
-        pure
-        returns (bool)
-    {
-        if (isNotSet(pt)) return false;
-        if (pt.x.isZero(PP) && pt.y.equals(1, PP)) return true;
+    function isIdentityElement(ECPoint memory pt) internal pure returns (bool) {
+        if (pt.x == 0 && pt.y == 1) return true;
         return false;
     }
 
-    function pack(ECPointExt memory pt) internal pure returns (bytes memory) {
+    function pack(ECPoint memory pt) internal pure returns (bytes memory) {
         return abi.encodePacked(pt.x, pt.y);
     }
 
-    function add(ECPointExt memory pt1, ECPointExt memory pt2)
+    function add(ECPoint memory pt1, ECPoint memory pt2)
         internal
         pure
-        returns (ECPointExt memory)
+        returns (ECPoint memory)
     {
-        if (isNotSet(pt1) || isIdentityElement(pt1)) return pt2;
-        if (isNotSet(pt2) || isIdentityElement(pt2)) return pt1;
         (uint256 x, uint256 y) =
             EllipticCurve.ecAdd(pt1.x, pt1.y, pt2.x, pt2.y, AA, PP);
-        return ECPointExt(x, y);
+        return ECPoint(x, y);
     }
 
-    function add(ECPointExt[] memory pt1, ECPointExt[] memory pt2)
+    function add(ECPoint[] memory pt1, ECPoint[] memory pt2)
         internal
         pure
-        returns (ECPointExt[] memory)
+        returns (ECPoint[] memory)
     {
         require(pt1.length == pt2.length, "a.length != b.length");
-        ECPointExt[] memory result = new ECPointExt[](pt1.length);
+        ECPoint[] memory result = new ECPoint[](pt1.length);
         for (uint256 i = 0; i < pt1.length; i++) {
             result[i] = add(pt1[i], pt2[i]);
         }
         return result;
     }
 
-    function sub(ECPointExt memory pt1, ECPointExt memory pt2)
+    function sub(ECPoint memory pt1, ECPoint memory pt2)
         internal
         pure
-        returns (ECPointExt memory)
+        returns (ECPoint memory)
     {
-        if (isNotSet(pt2)) return pt1;
-        if (isIdentityElement(pt2)) return pt1;
         (uint256 x, uint256 y) =
             EllipticCurve.ecSub(pt1.x, pt1.y, pt2.x, pt2.y, AA, PP);
-        return ECPointExt(x, y);
+        return ECPoint(x, y);
     }
 
-    function scalar(ECPointExt memory pt, uint256 k)
+    function subG(ECPoint memory pt) internal pure returns (ECPoint memory) {
+        return sub(pt, g());
+    }
+
+    function subZ(ECPoint memory pt) internal pure returns (ECPoint memory) {
+        return sub(pt, z());
+    }
+
+    function scalar(ECPoint memory pt, uint256 k)
         internal
         pure
-        returns (ECPointExt memory)
+        returns (ECPoint memory)
     {
-        if (isNotSet(pt)) return pt;
-        if (isIdentityElement(pt)) return pt;
-        if (k == 0) return zero();
-        (uint256 x, uint256 y) = EllipticCurve.ecMul(k, pt.x, pt.y, AA, PP);
-        return ECPointExt(x, y);
+        (uint256 x, uint256 y) =
+            EllipticCurve.ecMul(k % QQ, pt.x, pt.y, AA, PP);
+        return ECPoint(x, y);
     }
 }

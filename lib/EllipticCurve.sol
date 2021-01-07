@@ -11,8 +11,8 @@ pragma experimental ABIEncoderV2;
  */
 library EllipticCurve {
     // Pre-computed constant for 2 ** 255
-    uint256
-        private constant U255_MAX_PLUS_1 = 57896044618658097711785492504343953926634992332820282019728792003956564819968;
+    uint256 private constant U255_MAX_PLUS_1 =
+        57896044618658097711785492504343953926634992332820282019728792003956564819968;
 
     /// @dev Modular euclidean inverse of a number (mod p).
     /// @param _x The number
@@ -60,31 +60,31 @@ library EllipticCurve {
     /// @param _bb constant of curve
     /// @param _pp the modulus
     /// @return true if x,y in the curve, false else
-    function isOnCurve(
-        uint256 _x,
-        uint256 _y,
-        uint256 _aa,
-        uint256 _bb,
-        uint256 _pp
-    ) internal pure returns (bool) {
-        if (0 == _x || _x >= _pp || 0 == _y || _y >= _pp) {
-            return false;
-        }
-        // y^2
-        uint256 lhs = mulmod(_y, _y, _pp);
-        // x^3
-        uint256 rhs = mulmod(mulmod(_x, _x, _pp), _x, _pp);
-        if (_aa != 0) {
-            // x^3 + a*x
-            rhs = addmod(rhs, mulmod(_x, _aa, _pp), _pp);
-        }
-        if (_bb != 0) {
-            // x^3 + a*x + b
-            rhs = addmod(rhs, _bb, _pp);
-        }
+    // function isOnCurve(
+    //     uint256 _x,
+    //     uint256 _y,
+    //     uint256 _aa,
+    //     uint256 _bb,
+    //     uint256 _pp
+    // ) internal pure returns (bool) {
+    //     if (0 == _x || _x >= _pp || 0 == _y || _y >= _pp) {
+    //         return false;
+    //     }
+    //     // y^2
+    //     uint256 lhs = mulmod(_y, _y, _pp);
+    //     // x^3
+    //     uint256 rhs = mulmod(mulmod(_x, _x, _pp), _x, _pp);
+    //     if (_aa != 0) {
+    //         // x^3 + a*x
+    //         rhs = addmod(rhs, mulmod(_x, _aa, _pp), _pp);
+    //     }
+    //     if (_bb != 0) {
+    //         // x^3 + a*x + b
+    //         rhs = addmod(rhs, _bb, _pp);
+    //     }
 
-        return lhs == rhs;
-    }
+    //     return lhs == rhs;
+    // }
 
     /// @dev Calculate inverse (x, -y) of point (x, y).
     /// @param _x coordinate x of P1
@@ -240,11 +240,12 @@ library EllipticCurve {
         uint256 qx = addmod(mulmod(hr[1], hr[1], _pp), _pp - hr[3], _pp);
         qx = addmod(qx, _pp - mulmod(2, mulmod(zs[0], hr[2], _pp), _pp), _pp);
         // qy = -s1*z1*h^3+r(u1*h^2 -x^3)
-        uint256 qy = mulmod(
-            hr[1],
-            addmod(mulmod(zs[0], hr[2], _pp), _pp - qx, _pp),
-            _pp
-        );
+        uint256 qy =
+            mulmod(
+                hr[1],
+                addmod(mulmod(zs[0], hr[2], _pp), _pp - qx, _pp),
+                _pp
+            );
         qy = addmod(qy, _pp - mulmod(zs[1], hr[3], _pp), _pp);
         // qz = h*z1*z2
         uint256 qz = mulmod(hr[0], mulmod(_z1, _z2, _pp), _pp);
@@ -286,11 +287,8 @@ library EllipticCurve {
         // s
         uint256 s = mulmod(4, mulmod(_x, y, _pp), _pp);
         // m
-        uint256 m = addmod(
-            mulmod(3, x, _pp),
-            mulmod(_aa, mulmod(z, z, _pp), _pp),
-            _pp
-        );
+        uint256 m =
+            addmod(mulmod(3, x, _pp), mulmod(_aa, mulmod(z, z, _pp), _pp), _pp);
 
         // x, y, z at this point will be reassigned and rather represent qx, qy, qz from the paper
         // This allows to reduce the gas cost and stack footprint of the algorithm

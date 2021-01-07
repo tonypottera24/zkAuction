@@ -2,47 +2,50 @@
 pragma solidity >=0.7.0 <0.8.0;
 pragma experimental ABIEncoderV2;
 
-import {ECPointExt, ECPointLib} from "./ECPointLib.sol";
+import {UIntLib} from "./UIntLib.sol";
+import {ECPoint, ECPointLib} from "./ECPointLib.sol";
 import {Ct, CtLib} from "./CtLib.sol";
 
 struct SameDLProof {
-    ECPointExt t1;
-    ECPointExt t2;
-    uint256 r;
+    ECPoint grr1;
+    ECPoint grr2;
+    uint256 rrr;
 }
 
 library SameDLProofLib {
-    using ECPointLib for ECPointExt;
+    using UIntLib for uint256;
+    using ECPointLib for ECPoint;
 
     function valid(
         SameDLProof memory pi,
-        ECPointExt memory g1,
-        ECPointExt memory g2,
-        ECPointExt memory y1,
-        ECPointExt memory y2
+        ECPoint memory g1,
+        ECPoint memory g2,
+        ECPoint memory y1,
+        ECPoint memory y2
     ) internal pure returns (bool) {
-        bytes32 digest = keccak256(
-            abi.encodePacked(
-                g1.pack(),
-                g2.pack(),
-                y1.pack(),
-                y2.pack(),
-                pi.t1.pack(),
-                pi.t2.pack()
-            )
-        );
-        uint256 c = uint256(digest);
+        bytes32 digest =
+            keccak256(
+                abi.encodePacked(
+                    g1.pack(),
+                    g2.pack(),
+                    y1.pack(),
+                    y2.pack(),
+                    pi.grr1.pack(),
+                    pi.grr2.pack()
+                )
+            );
+        uint256 c = uint256(digest).modQ();
         return
-            pi.t1.equals(g1.scalar(pi.r).add(y1.scalar(c))) &&
-            pi.t2.equals(g2.scalar(pi.r).add(y2.scalar(c)));
+            g1.scalar(pi.rrr).equals(pi.grr1.add(y1.scalar(c))) &&
+            g2.scalar(pi.rrr).equals(pi.grr2.add(y2.scalar(c)));
     }
 
     function valid(
         SameDLProof[] memory pi,
-        ECPointExt[] memory g1,
-        ECPointExt[] memory g2,
-        ECPointExt[] memory y1,
-        ECPointExt[] memory y2
+        ECPoint[] memory g1,
+        ECPoint[] memory g2,
+        ECPoint[] memory y1,
+        ECPoint[] memory y2
     ) internal pure returns (bool) {
         for (uint256 i = 0; i < pi.length; i++) {
             if (valid(pi[i], g1[i], g2[i], y1[i], y2[i]) == false) return false;
