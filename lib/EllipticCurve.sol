@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.5.3 <0.7.0;
+pragma solidity >=0.5.3 <0.8.0;
 
 /**
  * @title Elliptic Curve Library
@@ -9,9 +9,9 @@ pragma solidity >=0.5.3 <0.7.0;
  * @author Witnet Foundation
  */
 library EllipticCurve {
-    /// Pre-computed constant for 2 ** 255
-    uint256
-        private constant U255_MAX_PLUS_1 = 57896044618658097711785492504343953926634992332820282019728792003956564819968;
+    // Pre-computed constant for 2 ** 255
+    uint256 private constant U255_MAX_PLUS_1 =
+        57896044618658097711785492504343953926634992332820282019728792003956564819968;
 
     /// @dev Modular euclidean inverse of a number (mod p).
     /// @param _x The number
@@ -239,11 +239,12 @@ library EllipticCurve {
         uint256 qx = addmod(mulmod(hr[1], hr[1], _pp), _pp - hr[3], _pp);
         qx = addmod(qx, _pp - mulmod(2, mulmod(zs[0], hr[2], _pp), _pp), _pp);
         // qy = -s1*z1*h^3+r(u1*h^2 -x^3)
-        uint256 qy = mulmod(
-            hr[1],
-            addmod(mulmod(zs[0], hr[2], _pp), _pp - qx, _pp),
-            _pp
-        );
+        uint256 qy =
+            mulmod(
+                hr[1],
+                addmod(mulmod(zs[0], hr[2], _pp), _pp - qx, _pp),
+                _pp
+            );
         qy = addmod(qy, _pp - mulmod(zs[1], hr[3], _pp), _pp);
         // qz = h*z1*z2
         uint256 qz = mulmod(hr[0], mulmod(_z1, _z2, _pp), _pp);
@@ -285,11 +286,8 @@ library EllipticCurve {
         // s
         uint256 s = mulmod(4, mulmod(_x, y, _pp), _pp);
         // m
-        uint256 m = addmod(
-            mulmod(3, x, _pp),
-            mulmod(_aa, mulmod(z, z, _pp), _pp),
-            _pp
-        );
+        uint256 m =
+            addmod(mulmod(3, x, _pp), mulmod(_aa, mulmod(z, z, _pp), _pp), _pp);
 
         // x, y, z at this point will be reassigned and rather represent qx, qy, qz from the paper
         // This allows to reduce the gas cost and stack footprint of the algorithm

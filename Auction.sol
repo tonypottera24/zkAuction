@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.4.22 <0.7.0;
+pragma solidity >=0.4.22 <0.8.0;
 pragma experimental ABIEncoderV2;
 
 import {
@@ -188,7 +188,7 @@ contract Auction {
             require(duration[i] > 0, "Timer duration must larger than zero.");
             timer[i].duration = duration[i];
         }
-        timer[0].start = now;
+        timer[0].start = block.timestamp;
         auctioneerBalanceLimit = _balanceLimit[0];
         bidderBalanceLimit = _balanceLimit[1];
     }
@@ -220,7 +220,7 @@ contract Auction {
         auctioneer.elgamalY = elgamalY;
         auctioneer.balance = msg.value;
         if (phase1Success()) {
-            timer[1].start = now;
+            timer[1].start = block.timestamp;
             timer[2].start = timer[1].start + timer[1].duration;
         }
     }
@@ -298,7 +298,7 @@ contract Auction {
         }
         if (phase3Success()) {
             phase4Prepare();
-            timer[3].start = now;
+            timer[3].start = block.timestamp;
         }
     }
 
@@ -342,7 +342,7 @@ contract Auction {
         }
         if (phase3Success()) {
             phase4Prepare();
-            timer[3].start = now;
+            timer[3].start = block.timestamp;
         }
     }
 
@@ -398,7 +398,7 @@ contract Auction {
             }
             if (bList.length() > 0) {
                 phase4Prepare();
-                timer[3].start = now;
+                timer[3].start = block.timestamp;
             } else {
                 returnAllBalance();
                 auctionAborted = true;
@@ -466,7 +466,7 @@ contract Auction {
             }
             secondHighestBidPriceJ = (binarySearchL + binarySearchR) / 2;
         }
-        if (phase4Success()) timer[4].start = now;
+        if (phase4Success()) timer[4].start = block.timestamp;
     }
 
     function phase4Success() public view returns (bool) {
@@ -507,9 +507,9 @@ contract Auction {
         require(timer[4].timesUp() == false, "Phase 5 time's up.");
         Auctioneer storage auctioneer = aList.find(msg.sender);
         for (uint256 i = 0; i < bList.length(); i++) {
-            bList.get(i).bidA[secondHighestBidPriceJ + 1] = bList
-                .get(i)
-                .bidA[secondHighestBidPriceJ + 1]
+            bList.get(i).bidA[secondHighestBidPriceJ + 1] = bList.get(i).bidA[
+                secondHighestBidPriceJ + 1
+            ]
                 .decrypt(auctioneer, ux[i], pi[i]);
             if (
                 bList.get(i).bidA[secondHighestBidPriceJ + 1].isFullDec() &&
@@ -520,7 +520,7 @@ contract Auction {
                 winnerI = i;
             }
         }
-        if (phase5Success()) timer[5].start = now;
+        if (phase5Success()) timer[5].start = block.timestamp;
     }
 
     function phase5Success() public view returns (bool) {
@@ -584,9 +584,8 @@ contract Auction {
     }
 
     function getBalance() public view returns (uint256[] memory) {
-        uint256[] memory result = new uint256[](
-            aList.length() + bList.length()
-        );
+        uint256[] memory result =
+            new uint256[](aList.length() + bList.length());
         for (uint256 i = 0; i < aList.length(); i++) {
             result[i] = aList.get(i).balance;
         }
