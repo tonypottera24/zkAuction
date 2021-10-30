@@ -8,7 +8,7 @@ struct Timer {
 }
 
 library TimerLib {
-    function timesUp(Timer storage t) internal view returns (bool) {
+    function exceeded(Timer storage t) internal view returns (bool) {
         if (t.start == 0) return false;
         return block.timestamp > t.start + t.timeout;
     }

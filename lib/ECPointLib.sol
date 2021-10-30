@@ -38,13 +38,13 @@ library ECPointLib {
         return scalar(g(), 2);
     }
 
-    function isNotSet(ECPoint memory pt) internal pure returns (bool) {
+    function isEmpty(ECPoint memory pt) internal pure returns (bool) {
         return pt.x.isZero() && pt.y.isZero();
     }
 
-    function isNotSet(ECPoint[] memory pt) internal pure returns (bool) {
+    function isEmpty(ECPoint[] memory pt) internal pure returns (bool) {
         for (uint256 i = 0; i < pt.length; i++) {
-            if (isNotSet(pt[i]) == false) return false;
+            if (isEmpty(pt[i]) == false) return false;
         }
         return true;
     }
@@ -70,8 +70,7 @@ library ECPointLib {
     }
 
     function isIdentityElement(ECPoint memory pt) internal pure returns (bool) {
-        if (pt.x == 0 && pt.y == 1) return true;
-        return false;
+        return pt.x == 0 && pt.y == 1;
     }
 
     function pack(ECPoint memory pt) internal pure returns (bytes memory) {
@@ -83,8 +82,14 @@ library ECPointLib {
         pure
         returns (ECPoint memory)
     {
-        (uint256 x, uint256 y) =
-            EllipticCurve.ecAdd(pt1.x, pt1.y, pt2.x, pt2.y, AA, PP);
+        (uint256 x, uint256 y) = EllipticCurve.ecAdd(
+            pt1.x,
+            pt1.y,
+            pt2.x,
+            pt2.y,
+            AA,
+            PP
+        );
         return ECPoint(x, y);
     }
 
@@ -106,8 +111,14 @@ library ECPointLib {
         pure
         returns (ECPoint memory)
     {
-        (uint256 x, uint256 y) =
-            EllipticCurve.ecSub(pt1.x, pt1.y, pt2.x, pt2.y, AA, PP);
+        (uint256 x, uint256 y) = EllipticCurve.ecSub(
+            pt1.x,
+            pt1.y,
+            pt2.x,
+            pt2.y,
+            AA,
+            PP
+        );
         return ECPoint(x, y);
     }
 
@@ -124,8 +135,13 @@ library ECPointLib {
         pure
         returns (ECPoint memory)
     {
-        (uint256 x, uint256 y) =
-            EllipticCurve.ecMul(k % QQ, pt.x, pt.y, AA, PP);
+        (uint256 x, uint256 y) = EllipticCurve.ecMul(
+            k % QQ,
+            pt.x,
+            pt.y,
+            AA,
+            PP
+        );
         return ECPoint(x, y);
     }
 }

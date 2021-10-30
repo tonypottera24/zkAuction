@@ -20,13 +20,13 @@ library CtLib {
     using SameDLProofLib for SameDLProof;
     using SameDLProofLib for SameDLProof[];
 
-    function isNotSet(Ct memory ct) internal pure returns (bool) {
-        return ct.u.isNotSet() || ct.c.isNotSet();
+    function isEmpty(Ct memory ct) internal pure returns (bool) {
+        return ct.u.isEmpty() || ct.c.isEmpty();
     }
 
-    function isNotSet(Ct[] memory ct) internal pure returns (bool) {
+    function isEmpty(Ct[] memory ct) internal pure returns (bool) {
         for (uint256 i = 0; i < ct.length; i++) {
-            if (isNotSet(ct[i]) == false) return false;
+            if (isEmpty(ct[i]) == false) return false;
         }
         return true;
     }
