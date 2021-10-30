@@ -4,12 +4,12 @@ pragma experimental ABIEncoderV2;
 
 struct Timer {
     uint256 start;
-    uint256 duration;
+    uint256 timeout;
 }
 
 library TimerLib {
     function timesUp(Timer storage t) internal view returns (bool) {
         if (t.start == 0) return false;
-        return block.timestamp > t.start + t.duration;
+        return block.timestamp > t.start + t.timeout;
     }
 }
