@@ -6,6 +6,7 @@ import {UIntLib} from "./UIntLib.sol";
 import {ECPoint, ECPointLib} from "./ECPointLib.sol";
 import {Bidder, BidderList, BidderListLib} from "./BidderListLib.sol";
 import {Ct, CtLib} from "./CtLib.sol";
+import {BiddingVectorItem, BiddingVectorItemLib} from "./BiddingVectorItemLib.sol";
 
 struct Ct01Proof {
     ECPoint aa0;
@@ -21,12 +22,13 @@ struct Ct01Proof {
 library Ct01ProofLib {
     using UIntLib for uint256;
     using ECPointLib for ECPoint;
+    using BiddingVectorItemLib for BiddingVectorItem;
 
     function valid(
         Ct01Proof memory pi,
         Ct memory ct,
         ECPoint memory y
-    ) internal view returns (bool) {
+    ) internal pure returns (bool) {
         require(
             ECPointLib.g().scalar(pi.rrr0).equals(
                 pi.aa0.add(ct.u.scalar(pi.c0))
@@ -52,29 +54,28 @@ library Ct01ProofLib {
             return false;
         }
 
-        bytes32 digest =
-            keccak256(
-                abi.encodePacked(
-                    y.pack(),
-                    ct.u.pack(),
-                    ct.c.pack(),
-                    pi.aa0.pack(),
-                    pi.bb0.pack(),
-                    pi.aa1.pack(),
-                    pi.bb1.pack()
-                )
-            );
+        bytes32 digest = keccak256(
+            abi.encodePacked(
+                y.pack(),
+                ct.u.pack(),
+                ct.c.pack(),
+                pi.aa0.pack(),
+                pi.bb0.pack(),
+                pi.aa1.pack(),
+                pi.bb1.pack()
+            )
+        );
         uint256 c = uint256(digest);
         return pi.c0 + pi.c1 == c;
     }
 
     function valid(
         Ct01Proof[] memory pi,
-        Ct[] memory ct,
+        BiddingVectorItem[] memory v,
         ECPoint memory y
-    ) internal view returns (bool) {
+    ) internal pure returns (bool) {
         for (uint256 i = 0; i < pi.length; i++) {
-            if (valid(pi[i], ct[i], y) == false) return false;
+            if (valid(pi[i], v[i].ct, y) == false) return false;
         }
         return true;
     }

@@ -40,7 +40,7 @@ library CtLib {
 
     function add(Ct memory ct1, Ct memory ct2)
         internal
-        view
+        pure
         returns (Ct memory)
     {
         return Ct(ct1.u.add(ct2.u), ct1.c.add(ct2.c));
@@ -48,7 +48,7 @@ library CtLib {
 
     function add(Ct[] memory ct1, Ct[] memory ct2)
         internal
-        view
+        pure
         returns (Ct[] memory result)
     {
         require(ct1.length == ct2.length, "ct1.length != ct2.length");
@@ -60,7 +60,7 @@ library CtLib {
 
     function subC(Ct memory ct, ECPoint memory a)
         internal
-        view
+        pure
         returns (Ct memory)
     {
         return Ct(ct.u, ct.c.sub(a));
@@ -68,7 +68,7 @@ library CtLib {
 
     function subC(Ct[] memory ct, ECPoint memory a)
         internal
-        view
+        pure
         returns (Ct[] memory result)
     {
         result = new Ct[](ct.length);
@@ -77,11 +77,11 @@ library CtLib {
         }
     }
 
-    function equals(Ct memory ct1, Ct memory ct2) internal view returns (bool) {
+    function equals(Ct memory ct1, Ct memory ct2) internal pure returns (bool) {
         return ct1.u.equals(ct2.u) && ct1.c.equals(ct2.c);
     }
 
-    function sum(Ct[] memory ct) internal view returns (Ct memory result) {
+    function sum(Ct[] memory ct) internal pure returns (Ct memory result) {
         if (ct.length > 0) {
             result = ct[0];
             for (uint256 i = 1; i < ct.length; i++) {
@@ -97,7 +97,7 @@ library CtLib {
         SameDLProof memory pi
     ) internal view returns (Ct memory) {
         require(
-            pi.valid(ct.u, ECPointLib.g(), ux, bidder.elgamalY),
+            pi.valid(ct.u, ECPointLib.g(), ux, bidder.pk),
             "Same discrete log verification failed."
         );
         return Ct(ct.u, ct.c.sub(ux));

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.7.0 <0.8.0;
-pragma experimental ABIEncoderV2;
+
+pragma solidity >=0.5.3 <0.7.0;
 
 /**
  * @title Elliptic Curve Library
@@ -206,7 +206,6 @@ library EllipticCurve {
         if (_x1 == _x2) {
             // y1 = -y2 mod p
             if (addmod(_y1, _y2, _pp) == 0) {
-                // return (0, 1);
                 return (0, 0);
             } else {
                 // P1 = P2
@@ -357,7 +356,6 @@ library EllipticCurve {
             uint256
         )
     {
-        // assert(_z != 0);
         if (_z == 0) return (_x, _y, _z);
 
         // We follow the equations described in https://pdfs.semanticscholar.org/5c64/29952e08025a9649c2b0ba32518e9a7fb5c2.pdf Section 5
@@ -418,7 +416,6 @@ library EllipticCurve {
     {
         // Early return in case that `_d == 0`
         if (_d == 0) {
-            // return (0, 1, 1);
             return (_x, _y, _z);
         }
 

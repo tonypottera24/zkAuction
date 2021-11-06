@@ -4,13 +4,14 @@ pragma experimental ABIEncoderV2;
 
 import {ECPoint} from "./ECPointLib.sol";
 import {Ct, CtLib} from "./CtLib.sol";
+import {BiddingVectorItem, BiddingVectorItemLib} from "./BiddingVectorItemLib.sol";
 
 struct Bidder {
     address addr;
     uint256 stake;
     bool isMalicious;
-    ECPoint elgamalY;
-    Ct[] bidA;
+    ECPoint pk;
+    BiddingVectorItem[] a;
     bool hasSubmitBidCA;
     bool hasDecBidCA;
     bool win;
@@ -30,14 +31,14 @@ library BidderListLib {
         BidderList storage bList,
         address addr,
         uint256 stake,
-        ECPoint memory elgamalY
+        ECPoint memory pk
     ) internal {
         bList.list.push();
         bList.map[addr] = bList.list.length - 1;
-        Bidder storage bidder = bList.list[bList.list.length - 1];
-        bidder.addr = addr;
-        bidder.stake = stake;
-        bidder.elgamalY = elgamalY;
+        Bidder storage B = bList.list[bList.list.length - 1];
+        B.addr = addr;
+        B.stake = stake;
+        B.pk = pk;
     }
 
     function get(BidderList storage bList, uint256 i)
