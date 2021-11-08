@@ -24,8 +24,8 @@ library CtMProofLib {
 
     function valid(
         CtMProof memory pi,
-        ECPoint memory y,
         Ct memory ct,
+        ECPoint memory y,
         uint256 m
     ) internal view returns (bool) {
         ECPoint memory zm = ECPointLib.z().scalar(m);
@@ -44,7 +44,7 @@ library CtMProofLib {
         uint256 m
     ) internal view returns (bool) {
         for (uint256 i = 0; i < pi.length; i++) {
-            if (valid(pi[i], y, ct[i], m) == false) return false;
+            if (valid(pi[i], ct[i], y, m) == false) return false;
         }
         return true;
     }

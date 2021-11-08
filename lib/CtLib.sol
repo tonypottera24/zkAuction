@@ -36,6 +36,7 @@ library CtLib {
             if (ct1.length <= i) ct1.push(ct2[i]);
             else ct1[i] = ct2[i];
         }
+        while (ct1.length > ct2.length) ct1.pop();
     }
 
     function add(Ct memory ct1, Ct memory ct2)

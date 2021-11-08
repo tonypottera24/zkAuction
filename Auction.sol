@@ -38,15 +38,26 @@ contract Auction {
     uint256 public L;
     uint256[7] successCount;
     BiddingVectorItem[] public c;
-    Ct[] public bidCA;
-    uint256 public jM;
     uint256 public minimumStake;
     bool public auctionAborted;
     Timer[7] public timer;
     uint64 public phase;
 
-    function bListLength() public view returns (uint256) {
-        return bList.length();
+    Ct[] public mixedC;
+    uint256 public jM;
+    uint256 public binarySearchL;
+    uint256 public binarySearchR;
+
+    uint256 public m1stPrice;
+
+    ECPoint[] zM;
+
+    function cLength() public view returns (uint256) {
+        return c.length;
+    }
+
+    function eccTest() public view returns (ECPoint memory) {
+        return ECPointLib.z().sub(ECPointLib.z());
     }
 
     constructor(
@@ -72,16 +83,27 @@ contract Auction {
         timer[2].start = timer[1].start + timer[1].timeout;
         minimumStake = _minimumStake;
         phase = 1;
+
+        // binary search
+        zM.push(ECPointLib.identityElement());
+        for (uint256 k = 1; k <= _M; k++) {
+            zM.push(zM[k - 1].add(ECPointLib.z()));
+        }
+
+        // require(
+        //     ECPointLib.z().sub(ECPointLib.z()).isIdentityElement(),
+        //     "ecc test"
+        // );
     }
 
-    function phase1BidderInit(ECPoint memory _pk, DLProof memory pi)
+    function phase1BidderInit(ECPoint memory _pk, DLProof memory _pi)
         public
         payable
     {
         require(phase == 1, "phase != 1");
         require(timer[1].exceeded() == false, "timer[1].exceeded() == true");
         require(_pk.isEmpty() == false, "pk must not be zero");
-        require(pi.valid(ECPointLib.g(), _pk), "Discrete log proof invalid.");
+        // require(_pi.valid(ECPointLib.g(), _pk), "Discrete log proof invalid.");
         require(
             msg.value >= minimumStake,
             "Bidder's deposit must larger than minimumStake."
@@ -105,9 +127,9 @@ contract Auction {
     }
 
     function phase2BidderSubmitBid(
-        BiddingVectorItem[] memory v,
-        Ct01Proof[] memory v_01_proof,
-        CtMProof memory v_sum_proof
+        BiddingVectorItem[] memory _v,
+        Ct01Proof[] memory _v_01_proof,
+        CtMProof memory _v_sum_proof
     ) public {
         if (phase == 1 && phase1Success()) phase = 2;
         require(phase == 2, "phase != 2");
@@ -118,27 +140,33 @@ contract Auction {
             "Bidder can only submit their bids if they join in phase 1."
         );
         require(
-            v.length == L && v_01_proof.length == L,
+            _v.length == L && _v_01_proof.length == L,
             "bid.length != L || pi01.length != L"
         );
-        require(v_01_proof.valid(v, pk), "Ct01Proof not valid.");
-        require(v_sum_proof.valid(pk, v.sum(), 1), "CtMProof not valid.");
+        for (uint256 j = 1; j < _v.length; j++) {
+            require(
+                _v[j].price > _v[j - 1].price,
+                "v.price must be incremental"
+            );
+        }
+        // require(_v_01_proof.valid(_v, pk), "Ct01Proof not valid.");
+        // require(_v_sum_proof.valid(_v.sum(), pk, 1), "CtMProof not valid.");
 
         // c array
         // Append v to c first, v will be modified later.
-        c.append(v);
+        c.append(_v);
 
         // a array
-        require(B.a.length == 0, "Already submit bid.");
-        for (int256 j = int256(B.a.length - 2); j >= 0; j--) {
-            v[uint256(j)] = v[uint256(j)].add(v[uint256(j + 1)].ct);
-        }
-        B.a.append(v);
+        require(B.v.length == 0, "Already submit bid.");
+        B.v.append(_v);
 
         successCount[2]++;
         if (phase2Success()) {
             c.distinct_sort();
-            // c.set(c.subC(ECPointLib.z().scalar(M)));
+
+            binarySearchR = c.length;
+            jM = (binarySearchL + binarySearchR) / 2;
+
             timer[2].start = block.timestamp;
         }
     }
@@ -153,37 +181,40 @@ contract Auction {
         require(phase2Success() == false, "phase2Success() == true");
         require(timer[2].exceeded(), "timer[2].exceeded() == false");
         for (uint256 i = 0; i < bList.length(); i++) {
-            if (bList.get(i).a.length != L) {
+            if (bList.get(i).v.length == 0) {
                 bList.get(i).isMalicious = true;
             }
         }
-        compensateBidderMalicious();
+        compensateHonestBidders();
         auctionAborted = true;
-        // NOTE: remove malicious bidder and continue.
+        // TODO remove malicious bidder and continue.
     }
 
-    function phase3M1stPriceDecisionPrepare(
-        Ct[] memory ctA,
-        SameDLProof[] memory pi
+    function phase3M1stPriceDecisionMix(
+        Ct[] memory _mixedC,
+        SameDLProof[] memory _pi
     ) public {
         if (phase == 2 && phase2Success()) phase = 3;
         require(phase == 3, "phase != 3");
         require(timer[3].exceeded() == false, "timer[3].exceeded() == true");
-        require(
-            pi.length == L && ctA.length == L,
-            "pi.length != L || ctA.length != L"
-        );
+        require(_mixedC.length == M + 1, "_mixedC.length != M + 1");
+        require(_pi.length == M + 1, "_pi.length != M + 1");
+        require(binarySearchFailed() == false, "binarySearchFailed() == true");
+
         Bidder storage B = bList.find(msg.sender);
-        require(B.hasSubmitBidCA == false, "bidder has already submit bidCA.");
-        for (uint256 j = 0; j < bidCA.length; j++) {
+        require(B.hasSubmitMixedC == false, "B.hasSubmitMix == true");
+        for (uint256 k = 0; k <= M; k++) {
+            Ct memory cc = c[jM].ct.subC(zM[k]);
             require(
-                pi[j].valid(c[j].ct.u, c[j].ct.c, ctA[j].u, ctA[j].c),
+                _pi[k].valid(cc.u, cc.c, _mixedC[k].u, _mixedC[k].c),
                 "SDL proof is not valid"
             );
         }
-        if (bidCA.length == 0) bidCA.set(ctA);
-        else bidCA.set(bidCA.add(ctA));
-        B.hasSubmitBidCA = true;
+
+        if (mixedC.length == 0) mixedC.set(_mixedC);
+        else mixedC.set(mixedC.add(_mixedC));
+
+        B.hasSubmitMixedC = true;
         successCount[3]++;
         if (phase3Success()) timer[4].start = block.timestamp;
     }
@@ -197,46 +228,77 @@ contract Auction {
         require(phase == 3, "phase != 3");
         require(phase3Success() == false, "phase3Success() == true");
         require(timer[3].exceeded(), "timer[3].exceeded() == false");
-        for (uint256 i = 0; i < bList.length(); i++) {
-            if (bList.get(i).hasSubmitBidCA == false) {
-                bList.get(i).isMalicious = true;
+        if (binarySearchFailed()) {
+            returnAllStake();
+        } else {
+            for (uint256 i = 0; i < bList.length(); i++) {
+                if (bList.get(i).hasSubmitMixedC == false) {
+                    bList.get(i).isMalicious = true;
+                }
             }
+            compensateHonestBidders();
         }
-        compensateBidderMalicious();
         auctionAborted = true;
     }
 
-    function phase4M1stPriceDecision(ECPoint memory ux, SameDLProof memory pi)
-        public
-    {
+    function phase4M1stPriceDecisionMatch(
+        ECPoint[] memory _ux,
+        SameDLProof[] memory _pi
+    ) public {
         if (phase == 3 && phase3Success()) phase = 4;
         require(phase == 4, "phase != 4");
         require(timer[4].exceeded() == false, "timer[4].exceeded() == true");
-        Bidder storage B = bList.find(msg.sender);
-        require(B.hasDecBidCA == false, "bidder has decrypt bidCA.");
-        bidCA[jM] = bidCA[jM].decrypt(B, ux, pi);
+        require(_ux.length == M + 1, "_ux.length != M + 1");
+        require(_pi.length == M + 1, "_pi.length != M + 1");
 
-        B.hasDecBidCA = true;
-        successCount[4]++;
-        if (
-            successCount[4] == bList.length() &&
-            bidCA[jM].c.isIdentityElement() == false
-        ) {
-            jM++;
-            for (uint256 i = 0; i < bList.length(); i++) {
-                bList.get(i).hasDecBidCA = false;
-            }
-            successCount[4] = 0;
+        Bidder storage B = bList.find(msg.sender);
+        require(B.hasDecMixedC == false, "bidder has decrypt bidCA.");
+        for (uint256 k = 0; k <= M; k++) {
+            mixedC[k] = mixedC[k].decrypt(B, _ux[k], _pi[k]);
         }
 
-        if (phase4Success()) timer[5].start = block.timestamp;
+        B.hasDecMixedC = true;
+        successCount[4]++;
+        if (successCount[4] == bList.length()) {
+            if (phase4Success()) {
+                m1stPrice = c[jM].price;
+                timer[5].start = block.timestamp;
+            } else {
+                if (binarySearchL != c.length - 1) {
+                    bool found = false;
+                    for (uint256 k = 0; k <= M; k++) {
+                        if (mixedC[k].c.isIdentityElement()) found = true;
+                    }
+                    if (found) binarySearchR = jM;
+                    else binarySearchL = jM;
+                    jM = (binarySearchL + binarySearchR) / 2;
+
+                    phase = 3;
+                    successCount[3] = 0;
+                    successCount[4] = 0;
+                    timer[3].start = block.timestamp;
+                    for (uint256 i = 0; i < bList.length(); i++) {
+                        bList.get(i).hasSubmitMixedC = false;
+                        bList.get(i).hasDecMixedC = false;
+                    }
+                    for (uint256 k = 0; k <= M; k++) {
+                        delete mixedC[k];
+                    }
+                }
+            }
+        }
     }
 
     function phase4Success() public view returns (bool) {
         return
-            jM < L &&
+            binarySearchL + 1 == binarySearchR &&
             successCount[4] == bList.length() &&
-            bidCA[jM].c.isIdentityElement();
+            binarySearchFailed() == false;
+    }
+
+    function binarySearchFailed() public view returns (bool) {
+        return
+            binarySearchL == c.length - 1 && successCount[4] == bList.length();
     }
 
     function phase4Resolve() public {
@@ -244,22 +306,32 @@ contract Auction {
         require(phase == 4, "phase != 4");
         require(phase4Success() == false, "phase4Success() == true");
         require(timer[4].exceeded(), "timer[4].exceeded() == false");
-        for (uint256 i = 0; i < bList.length(); i++) {
-            if (bList.get(i).hasDecBidCA == false) {
-                bList.get(i).isMalicious = true;
+        if (binarySearchFailed()) {
+            returnAllStake();
+        } else {
+            for (uint256 i = 0; i < bList.length(); i++) {
+                if (bList.get(i).hasDecMixedC == false) {
+                    bList.get(i).isMalicious = true;
+                }
             }
+            compensateHonestBidders();
         }
-        compensateBidderMalicious();
         auctionAborted = true;
     }
 
-    function phase5WinnerDecision(CtMProof memory piM) public {
+    function phase5WinnerDecision(CtMProof memory _piM) public {
         if (phase == 4 && phase4Success()) phase = 5;
         require(phase == 5, "phase != 5");
         require(timer[5].exceeded() == false, "timer[5].exceeded() == true");
         Bidder storage B = bList.find(msg.sender);
         require(B.win == false, "Bidder has already declare win.");
-        require(piM.valid(pk, B.a[jM].ct, 1), "CtMProof not valid.");
+        Ct memory v_sum = B.v[L - 1].ct;
+        for (int256 j = int256(L) - 2; j >= 0; j--) {
+            if (B.v[uint256(j)].price > m1stPrice) {
+                v_sum.add(B.v[uint256(j)].ct);
+            } else break;
+        }
+        require(_piM.valid(v_sum, pk, 1), "CtMProof not valid.");
         B.win = true;
         successCount[5]++;
         if (phase5Success()) timer[6].start = block.timestamp;
@@ -310,7 +382,7 @@ contract Auction {
                 bList.get(i).isMalicious = true;
             }
         }
-        if (bList.isMalicious()) compensateBidderMalicious();
+        if (bList.isMalicious()) compensateHonestBidders();
         else returnAllStake();
         auctionAborted = true;
     }
@@ -333,7 +405,7 @@ contract Auction {
         }
     }
 
-    function compensateBidderMalicious() internal {
+    function compensateHonestBidders() internal {
         require(bList.isMalicious(), "Bidders are not malicious.");
         uint256 d = 0;
         uint256 maliciousBidderCount = 0;

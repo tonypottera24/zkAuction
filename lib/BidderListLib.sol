@@ -11,9 +11,9 @@ struct Bidder {
     uint256 stake;
     bool isMalicious;
     ECPoint pk;
-    BiddingVectorItem[] a;
-    bool hasSubmitBidCA;
-    bool hasDecBidCA;
+    BiddingVectorItem[] v;
+    bool hasSubmitMixedC;
+    bool hasDecMixedC;
     bool win;
     bool payed;
 }

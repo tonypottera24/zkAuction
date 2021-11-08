@@ -16,16 +16,6 @@ library BiddingVectorItemLib {
     using ECPointLib for ECPoint;
     using CtLib for Ct;
 
-    // function set(BiddingVectorItem[] storage v1, BiddingVectorItem[] memory v2)
-    //     internal
-    // {
-    //     while (v1.length > v2.length) v1.pop();
-    //     for (uint256 i = 0; i < v2.length; i++) {
-    //         if (v1.length <= i) v1.push(v2[i]);
-    //         else v1[i] = v2[i];
-    //     }
-    // }
-
     function append(
         BiddingVectorItem[] storage v1,
         BiddingVectorItem[] memory v2
@@ -33,14 +23,6 @@ library BiddingVectorItemLib {
         for (uint256 i = 0; i < v2.length; i++) {
             v1.push(v2[i]);
         }
-    }
-
-    function add(BiddingVectorItem memory vj, Ct memory ct)
-        internal
-        pure
-        returns (BiddingVectorItem memory)
-    {
-        return BiddingVectorItem(vj.price, vj.ct.add(ct));
     }
 
     function sum(BiddingVectorItem[] memory v)
@@ -62,18 +44,15 @@ library BiddingVectorItemLib {
         v[0] = v_sorted[0];
         for (uint256 j = 1; j < v_sorted.length; j++) {
             if (v[i].price == v_sorted[j].price) {
-                v[i] = add(v[i], v_sorted[j].ct);
+                v[i].ct = v[i].ct.add(v_sorted[j].ct);
             } else {
-                if (v.length <= j) v.push(v_sorted[j]);
-                else v[i] = v_sorted[j];
                 i++;
+                v[i] = v_sorted[j];
             }
         }
-        while (v.length > i + 1) {
-            v.pop();
-        }
-        for (int256 j = int256(v.length - 2); j >= 0; j--) {
-            v[uint256(j)] = add(v[uint256(j)], v[uint256(j + 1)].ct);
+        while (v.length > i + 1) v.pop();
+        for (int256 j = int256(v.length) - 2; j >= 0; j--) {
+            v[uint256(j)].ct = v[uint256(j)].ct.add(v[uint256(j + 1)].ct);
         }
     }
 
@@ -90,9 +69,9 @@ library BiddingVectorItemLib {
             while (arr[uint256(i)].price < pivot) i++;
             while (pivot < arr[uint256(j)].price) j--;
             if (i <= j) {
-                (arr[uint256(i)].price, arr[uint256(j)].price) = (
-                    arr[uint256(j)].price,
-                    arr[uint256(i)].price
+                (arr[uint256(i)], arr[uint256(j)]) = (
+                    arr[uint256(j)],
+                    arr[uint256(i)]
                 );
                 i++;
                 j--;

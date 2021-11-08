@@ -206,14 +206,14 @@ library EllipticCurve {
         if (_x1 == _x2) {
             // y1 = -y2 mod p
             if (addmod(_y1, _y2, _pp) == 0) {
-                // return (0, 1);
-                return (0, 0);
+                return (0, 1);
+                // return (0, 0);
             } else {
                 // P1 = P2
                 (x, y, z) = jacDouble(_x1, _y1, 1, _aa, _pp);
             }
         } else {
-            (x, y, z) = jacAdd(_x1, _y1, 1, _x2, _y2, 1, _pp);
+            (x, y, z) = jacAdd(_x1, _y1, 1, _x2, _y2, 1, _aa, _pp);
         }
         // Get back to affine
         return toAffine(x, y, z, _pp);
@@ -277,6 +277,7 @@ library EllipticCurve {
         uint256 _x2,
         uint256 _y2,
         uint256 _z2,
+        uint256 _aa,
         uint256 _pp
     )
         internal
@@ -306,10 +307,20 @@ library EllipticCurve {
         ];
 
         // In case of zs[0] == zs[2] && zs[1] == zs[3], double function should be used
-        require(
-            zs[0] != zs[2] || zs[1] != zs[3],
-            "Use jacDouble function instead"
-        );
+        // require(
+        //     zs[0] != zs[2] || zs[1] != zs[3],
+        //     "Use jacDouble function instead"
+        // );
+        if (zs[0] == zs[2] && zs[1] == zs[3]) {
+            (uint256 x, uint256 y, uint256 z) = jacDouble(
+                _x1,
+                _y1,
+                _z1,
+                _aa,
+                _pp
+            );
+            return (x, y, z);
+        }
 
         uint256[4] memory hr;
         //h
@@ -331,7 +342,8 @@ library EllipticCurve {
         );
         qy = addmod(qy, _pp - mulmod(zs[1], hr[3], _pp), _pp);
         // qz = h*z1*z2
-        uint256 qz = mulmod(hr[0], mulmod(_z1, _z2, _pp), _pp);
+        uint256 qz = mulmod(_z1, _z2, _pp);
+        qz = mulmod(hr[0], qz, _pp);
         return (qx, qy, qz);
     }
 
@@ -418,8 +430,8 @@ library EllipticCurve {
     {
         // Early return in case that `_d == 0`
         if (_d == 0) {
-            // return (0, 1, 1);
-            return (_x, _y, _z);
+            return (0, 1, 0);
+            // return (_x, _y, _z);
         }
 
         uint256 remaining = _d;
@@ -430,7 +442,7 @@ library EllipticCurve {
         // Double and add algorithm
         while (remaining != 0) {
             if ((remaining & 1) != 0) {
-                (qx, qy, qz) = jacAdd(qx, qy, qz, _x, _y, _z, _pp);
+                (qx, qy, qz) = jacAdd(qx, qy, qz, _x, _y, _z, _aa, _pp);
             }
             remaining = remaining / 2;
             (_x, _y, _z) = jacDouble(_x, _y, _z, _aa, _pp);
