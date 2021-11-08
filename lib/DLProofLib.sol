@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.7.0 <0.8.0;
+pragma solidity >=0.7.0 <0.9.0;
 pragma experimental ABIEncoderV2;
 
 import {UIntLib} from "./UIntLib.sol";
@@ -19,8 +19,9 @@ library DLProofLib {
         ECPoint memory g,
         ECPoint memory y
     ) internal pure returns (bool) {
-        bytes32 digest =
-            keccak256(abi.encodePacked(g.pack(), y.pack(), pi.grr.pack()));
+        bytes32 digest = keccak256(
+            abi.encodePacked(g.pack(), y.pack(), pi.grr.pack())
+        );
         uint256 c = uint256(digest).modQ();
         return g.scalar(pi.rrr).equals(pi.grr.add(y.scalar(c)));
     }

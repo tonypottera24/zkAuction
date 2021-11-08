@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.7.0 <0.8.0;
+pragma solidity >=0.7.0 <0.9.0;
 pragma experimental ABIEncoderV2;
 
 import {UIntLib} from "./UIntLib.sol";
@@ -23,17 +23,16 @@ library SameDLProofLib {
         ECPoint memory y1,
         ECPoint memory y2
     ) internal pure returns (bool) {
-        bytes32 digest =
-            keccak256(
-                abi.encodePacked(
-                    g1.pack(),
-                    g2.pack(),
-                    y1.pack(),
-                    y2.pack(),
-                    pi.grr1.pack(),
-                    pi.grr2.pack()
-                )
-            );
+        bytes32 digest = keccak256(
+            abi.encodePacked(
+                g1.pack(),
+                g2.pack(),
+                y1.pack(),
+                y2.pack(),
+                pi.grr1.pack(),
+                pi.grr2.pack()
+            )
+        );
         uint256 c = uint256(digest).modQ();
         return
             g1.scalar(pi.rrr).equals(pi.grr1.add(y1.scalar(c))) &&

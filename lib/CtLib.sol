@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.7.0 <0.8.0;
+pragma solidity >=0.7.0 <0.9.0;
 pragma experimental ABIEncoderV2;
 
 import {BoolLib} from "./BoolLib.sol";
@@ -44,6 +44,8 @@ library CtLib {
         pure
         returns (Ct memory)
     {
+        if (isEmpty(ct1)) return ct2;
+        if (isEmpty(ct2)) return ct1;
         return Ct(ct1.u.add(ct2.u), ct1.c.add(ct2.c));
     }
 
@@ -64,6 +66,7 @@ library CtLib {
         pure
         returns (Ct memory)
     {
+        if (isEmpty(ct) || a.isEmpty()) return ct;
         return Ct(ct.u, ct.c.sub(a));
     }
 
@@ -79,6 +82,8 @@ library CtLib {
     }
 
     function equals(Ct memory ct1, Ct memory ct2) internal pure returns (bool) {
+        if (isEmpty(ct1)) return isEmpty(ct2);
+        if (isEmpty(ct2)) return isEmpty(ct1);
         return ct1.u.equals(ct2.u) && ct1.c.equals(ct2.c);
     }
 

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.7.0 <0.8.0;
+pragma solidity >=0.7.0 <0.9.0;
 pragma experimental ABIEncoderV2;
 
 import {BoolLib} from "./lib/BoolLib.sol";
@@ -56,8 +56,13 @@ contract Auction {
         return c.length;
     }
 
-    function eccTest() public view returns (ECPoint memory) {
-        return ECPointLib.z().sub(ECPointLib.z());
+    function Bv(uint256 index, uint256 j)
+        public
+        view
+        returns (BiddingVectorItem memory)
+    {
+        Bidder storage B = bList.get(index);
+        return B.v[j];
     }
 
     constructor(
@@ -89,11 +94,6 @@ contract Auction {
         for (uint256 k = 1; k <= _M; k++) {
             zM.push(zM[k - 1].add(ECPointLib.z()));
         }
-
-        // require(
-        //     ECPointLib.z().sub(ECPointLib.z()).isIdentityElement(),
-        //     "ecc test"
-        // );
     }
 
     function phase1BidderInit(ECPoint memory _pk, DLProof memory _pi)
@@ -103,7 +103,7 @@ contract Auction {
         require(phase == 1, "phase != 1");
         require(timer[1].exceeded() == false, "timer[1].exceeded() == true");
         require(_pk.isEmpty() == false, "pk must not be zero");
-        // require(_pi.valid(ECPointLib.g(), _pk), "Discrete log proof invalid.");
+        require(_pi.valid(ECPointLib.g(), _pk), "Discrete log proof invalid.");
         require(
             msg.value >= minimumStake,
             "Bidder's deposit must larger than minimumStake."
@@ -149,8 +149,8 @@ contract Auction {
                 "v.price must be incremental"
             );
         }
-        // require(_v_01_proof.valid(_v, pk), "Ct01Proof not valid.");
-        // require(_v_sum_proof.valid(_v.sum(), pk, 1), "CtMProof not valid.");
+        require(_v_01_proof.valid(_v, pk), "Ct01Proof not valid.");
+        require(_v_sum_proof.valid(_v.sum(), pk, 1), "CtMProof not valid.");
 
         // c array
         // Append v to c first, v will be modified later.
@@ -325,12 +325,13 @@ contract Auction {
         require(timer[5].exceeded() == false, "timer[5].exceeded() == true");
         Bidder storage B = bList.find(msg.sender);
         require(B.win == false, "Bidder has already declare win.");
-        Ct memory v_sum = B.v[L - 1].ct;
-        for (int256 j = int256(L) - 2; j >= 0; j--) {
-            if (B.v[uint256(j)].price > m1stPrice) {
-                v_sum.add(B.v[uint256(j)].ct);
-            } else break;
+        Ct memory v_sum;
+        for (uint256 j = 0; j < L; j++) {
+            if (B.v[j].price > m1stPrice) {
+                v_sum = v_sum.add(B.v[j].ct);
+            }
         }
+
         require(_piM.valid(v_sum, pk, 1), "CtMProof not valid.");
         B.win = true;
         successCount[5]++;

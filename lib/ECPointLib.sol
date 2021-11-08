@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.7.0 <0.8.0;
+pragma solidity >=0.7.0 <0.9.0;
 pragma experimental ABIEncoderV2;
 
 import {UIntLib} from "./UIntLib.sol";
@@ -40,7 +40,7 @@ library ECPointLib {
     }
 
     function isEmpty(ECPoint memory pt) internal pure returns (bool) {
-        return pt.z.isZero();
+        return pt.x.isZero() && pt.y.isZero() && pt.z.isZero();
     }
 
     function isIdentityElement(ECPoint memory pt) internal pure returns (bool) {
