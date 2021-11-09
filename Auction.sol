@@ -56,15 +56,6 @@ contract Auction {
         return c.length;
     }
 
-    function Bv(uint256 index, uint256 j)
-        public
-        view
-        returns (BiddingVectorItem memory)
-    {
-        Bidder storage B = bList.get(index);
-        return B.v[j];
-    }
-
     constructor(
         uint256 _M,
         uint256 _L,
