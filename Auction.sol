@@ -50,10 +50,14 @@ contract Auction {
 
     uint256 public m1stPrice;
 
-    ECPoint[] zM;
+    ECPoint[] public zM;
 
     function cLength() public view returns (uint256) {
         return c.length;
+    }
+
+    function czM(uint256 k) public view returns (Ct memory) {
+        return c[jM].ct.subC(zM[k]);
     }
 
     constructor(
@@ -195,7 +199,10 @@ contract Auction {
         Bidder storage B = bList.find(msg.sender);
         require(B.hasSubmitMixedC == false, "B.hasSubmitMix == true");
         for (uint256 k = 0; k <= M; k++) {
-            Ct memory cc = c[jM].ct.subC(zM[k]);
+            Ct memory cc = c[jM].ct;
+            if (k > 0) {
+                cc = cc.subC(zM[k]);
+            }
             require(
                 _pi[k].valid(cc.u, cc.c, _mixedC[k].u, _mixedC[k].c),
                 "SDL proof is not valid"
