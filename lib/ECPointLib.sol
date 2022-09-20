@@ -3,12 +3,13 @@ pragma solidity >=0.7.0 <0.9.0;
 pragma experimental ABIEncoderV2;
 
 import {UIntLib} from "./UIntLib.sol";
-import {EllipticCurve} from "./EllipticCurve.sol";
+import {PreCompiledLib} from "./PreCompiledLib.sol";
+// import {EllipticCurve} from "./EllipticCurve.sol";
 
 struct ECPoint {
     uint256 x;
     uint256 y;
-    uint256 z;
+    // uint256 z;
 }
 
 library ECPointLib {
@@ -18,33 +19,31 @@ library ECPointLib {
         48439561293906451759052585252797914202762949526041747995844080717082404635286;
     uint256 public constant GY =
         36134250956749795798585127919587881956611106672985015071877198253568414405109;
-    uint256 public constant AA =
-        115792089210356248762697446949407573530086143415290314195533631308867097853948;
-    uint256 public constant BB =
-        41058363725152142129326129780047268409114441015993725554835256314039467401291;
-    uint256 public constant PP =
-        115792089210356248762697446949407573530086143415290314195533631308867097853951;
-    uint256 public constant QQ =
-        115792089210356248762697446949407573529996955224135760342422259061068512044369;
+
+    uint256 public constant P =
+        65000549695646603732796438742359905742825358107623003571877145026864184071783;
+
+    uint256 public constant Q =
+        65000549695646603732796438742359905742570406053903786389881062969044166799969;
 
     function identityElement() internal pure returns (ECPoint memory) {
-        return ECPoint(0, 1, 0);
+        return ECPoint(0, 1);
     }
 
     function g() internal pure returns (ECPoint memory) {
-        return ECPoint(GX, GY, 1);
+        return ECPoint(GX, GY);
     }
 
-    function z() internal pure returns (ECPoint memory) {
+    function z() internal returns (ECPoint memory) {
         return scalar(g(), 2);
     }
 
     function isEmpty(ECPoint memory pt) internal pure returns (bool) {
-        return pt.x.isZero() && pt.y.isZero() && pt.z.isZero();
+        return pt.x.isZero() && pt.y.isZero();
     }
 
     function isIdentityElement(ECPoint memory pt) internal pure returns (bool) {
-        return pt.z.equals(0);
+        return pt.x.isZero() && pt.y == 1;
     }
 
     function isEmpty(ECPoint[] memory pt) internal pure returns (bool) {
@@ -59,24 +58,7 @@ library ECPointLib {
         pure
         returns (bool)
     {
-        if (isIdentityElement(pt1)) return isIdentityElement(pt2);
-        if (isIdentityElement(pt2)) return isIdentityElement(pt1);
-
-        uint256[4] memory zs; // z1^2, z1^3, z2^2, z2^3
-        zs[0] = mulmod(pt1.z, pt1.z, PP);
-        zs[1] = mulmod(pt1.z, zs[0], PP);
-        zs[2] = mulmod(pt2.z, pt2.z, PP);
-        zs[3] = mulmod(pt2.z, zs[2], PP);
-
-        // u1, s1, u2, s2
-        zs = [
-            mulmod(pt1.x, zs[2], PP),
-            mulmod(pt1.y, zs[3], PP),
-            mulmod(pt2.x, zs[0], PP),
-            mulmod(pt2.y, zs[1], PP)
-        ];
-
-        return zs[0] == zs[2] && zs[1] == zs[3];
+        return pt1.x == pt2.x && pt1.y == pt2.y;
     }
 
     function equals(ECPoint[] memory pt1, ECPoint[] memory pt2)
@@ -92,38 +74,31 @@ library ECPointLib {
     }
 
     function pack(ECPoint memory pt) internal pure returns (bytes memory) {
-        (uint256 x, uint256 y) = EllipticCurve.toAffine(pt.x, pt.y, pt.z, PP);
-        return abi.encodePacked(x, y);
+        return abi.encodePacked(pt.x, pt.y);
     }
 
-    function inv(ECPoint memory pt) internal pure returns (ECPoint memory) {
+    function neg(ECPoint memory pt) internal pure returns (ECPoint memory) {
         if (isIdentityElement(pt)) return identityElement();
-        return ECPoint(pt.x, (PP - pt.y) % PP, pt.z);
+        return ECPoint(pt.x, (P - pt.y) % P);
     }
 
     function add(ECPoint memory pt1, ECPoint memory pt2)
         internal
-        pure
         returns (ECPoint memory)
     {
         if (isIdentityElement(pt1)) return pt2;
         if (isIdentityElement(pt2)) return pt1;
-        (uint256 x, uint256 y, uint256 z) = EllipticCurve.jacAdd(
+        uint256[2] memory result = PreCompiledLib.bn256Add(
             pt1.x,
             pt1.y,
-            pt1.z,
             pt2.x,
-            pt2.y,
-            pt2.z,
-            AA,
-            PP
+            pt2.y
         );
-        return ECPoint(x, y, z);
+        return ECPoint(result[0], result[1]);
     }
 
     function add(ECPoint[] memory pt1, ECPoint[] memory pt2)
         internal
-        pure
         returns (ECPoint[] memory)
     {
         require(pt1.length == pt2.length, "a.length != b.length");
@@ -136,35 +111,26 @@ library ECPointLib {
 
     function sub(ECPoint memory pt1, ECPoint memory pt2)
         internal
-        pure
         returns (ECPoint memory)
     {
-        return add(pt1, inv(pt2));
+        return add(pt1, neg(pt2));
     }
 
-    function subG(ECPoint memory pt) internal pure returns (ECPoint memory) {
+    function subG(ECPoint memory pt) internal returns (ECPoint memory) {
         return sub(pt, g());
     }
 
-    function subZ(ECPoint memory pt) internal pure returns (ECPoint memory) {
+    function subZ(ECPoint memory pt) internal returns (ECPoint memory) {
         return sub(pt, z());
     }
 
     function scalar(ECPoint memory pt, uint256 k)
         internal
-        pure
         returns (ECPoint memory)
     {
         if (isIdentityElement(pt)) return pt;
-        if (k % QQ == 0) return identityElement();
-        (uint256 x, uint256 y, uint256 z) = EllipticCurve.jacMul(
-            k % QQ,
-            pt.x,
-            pt.y,
-            pt.z,
-            AA,
-            PP
-        );
-        return ECPoint(x, y, z);
+        if (k % Q == 0) return identityElement();
+        uint256[2] memory result = PreCompiledLib.bn256ScalarMul(pt.x, pt.y, k);
+        return ECPoint(result[0], result[1]);
     }
 }
