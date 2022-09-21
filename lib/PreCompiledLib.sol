@@ -3,7 +3,7 @@ pragma solidity >=0.7.0 <0.9.0;
 pragma experimental ABIEncoderV2;
 
 library PreCompiledLib {
-    function bn256Add(
+    function bn128Add(
         uint256 ax,
         uint256 ay,
         uint256 bx,
@@ -23,7 +23,7 @@ library PreCompiledLib {
         }
     }
 
-    function bn256ScalarMul(
+    function bn128ScalarMul(
         uint256 x,
         uint256 y,
         uint256 scalar

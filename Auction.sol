@@ -56,7 +56,7 @@ contract Auction {
         return c.length;
     }
 
-    function czM(uint256 k) public view returns (Ct memory) {
+    function czM(uint256 k) public returns (Ct memory) {
         return c[jM].ct.subC(zM[k]);
     }
 
@@ -97,15 +97,14 @@ contract Auction {
     {
         require(phase == 1, "phase != 1");
         require(timer[1].exceeded() == false, "timer[1].exceeded() == true");
-        require(_pk.isEmpty() == false, "pk must not be zero");
+        require(_pk.isIdentityElement() == false, "pk must not be zero");
         require(_pi.valid(ECPointLib.g(), _pk), "Discrete log proof invalid.");
         require(
             msg.value >= minimumStake,
             "Bidder's deposit must larger than minimumStake."
         );
         bList.init(msg.sender, msg.value, _pk);
-        if (pk.isEmpty()) pk = _pk;
-        else pk = pk.add(_pk);
+        pk = pk.add(_pk);
     }
 
     function phase1Success() public view returns (bool) {

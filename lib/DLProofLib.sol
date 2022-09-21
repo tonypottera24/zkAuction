@@ -18,7 +18,7 @@ library DLProofLib {
         DLProof memory pi,
         ECPoint memory g,
         ECPoint memory y
-    ) internal pure returns (bool) {
+    ) internal returns (bool) {
         bytes32 digest = keccak256(
             abi.encodePacked(g.pack(), y.pack(), pi.grr.pack())
         );

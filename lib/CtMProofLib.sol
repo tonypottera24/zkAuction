@@ -27,7 +27,7 @@ library CtMProofLib {
         Ct memory ct,
         ECPoint memory y,
         uint256 m
-    ) internal view returns (bool) {
+    ) internal returns (bool) {
         ECPoint memory zm = ECPointLib.z().scalar(m);
         ECPoint memory ctC = ct.c.sub(zm);
         require(
@@ -42,7 +42,7 @@ library CtMProofLib {
         ECPoint memory y,
         Ct[] memory ct,
         uint256 m
-    ) internal view returns (bool) {
+    ) internal returns (bool) {
         for (uint256 i = 0; i < pi.length; i++) {
             if (valid(pi[i], ct[i], y, m) == false) return false;
         }

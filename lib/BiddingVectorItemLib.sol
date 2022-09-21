@@ -27,7 +27,6 @@ library BiddingVectorItemLib {
 
     function sum(BiddingVectorItem[] memory v)
         internal
-        pure
         returns (Ct memory result)
     {
         if (v.length > 0) {

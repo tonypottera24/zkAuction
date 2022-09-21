@@ -9,25 +9,24 @@ import {PreCompiledLib} from "./PreCompiledLib.sol";
 struct ECPoint {
     uint256 x;
     uint256 y;
-    // uint256 z;
 }
 
 library ECPointLib {
     using UIntLib for uint256;
 
-    uint256 public constant GX =
-        48439561293906451759052585252797914202762949526041747995844080717082404635286;
-    uint256 public constant GY =
-        36134250956749795798585127919587881956611106672985015071877198253568414405109;
+    uint256 public constant GX = 1;
+    uint256 public constant GY = 2;
 
     uint256 public constant P =
-        65000549695646603732796438742359905742825358107623003571877145026864184071783;
+        21888242871839275222246405745257275088696311157297823662689037894645226208583;
 
     uint256 public constant Q =
-        65000549695646603732796438742359905742570406053903786389881062969044166799969;
+        21888242871839275222246405745257275088548364400416034343698204186575808495617;
+
+    // ECPoint public constant g;
 
     function identityElement() internal pure returns (ECPoint memory) {
-        return ECPoint(0, 1);
+        return ECPoint(0, 0);
     }
 
     function g() internal pure returns (ECPoint memory) {
@@ -38,19 +37,8 @@ library ECPointLib {
         return scalar(g(), 2);
     }
 
-    function isEmpty(ECPoint memory pt) internal pure returns (bool) {
-        return pt.x.isZero() && pt.y.isZero();
-    }
-
     function isIdentityElement(ECPoint memory pt) internal pure returns (bool) {
-        return pt.x.isZero() && pt.y == 1;
-    }
-
-    function isEmpty(ECPoint[] memory pt) internal pure returns (bool) {
-        for (uint256 i = 0; i < pt.length; i++) {
-            if (isEmpty(pt[i]) == false) return false;
-        }
-        return true;
+        return pt.x.isZero() && pt.y.isZero();
     }
 
     function equals(ECPoint memory pt1, ECPoint memory pt2)
@@ -58,7 +46,7 @@ library ECPointLib {
         pure
         returns (bool)
     {
-        return pt1.x == pt2.x && pt1.y == pt2.y;
+        return pt1.x.equals(pt2.x) && pt1.y.equals(pt2.y);
     }
 
     function equals(ECPoint[] memory pt1, ECPoint[] memory pt2)
@@ -88,7 +76,7 @@ library ECPointLib {
     {
         if (isIdentityElement(pt1)) return pt2;
         if (isIdentityElement(pt2)) return pt1;
-        uint256[2] memory result = PreCompiledLib.bn256Add(
+        uint256[2] memory result = PreCompiledLib.bn128Add(
             pt1.x,
             pt1.y,
             pt2.x,
@@ -130,7 +118,8 @@ library ECPointLib {
     {
         if (isIdentityElement(pt)) return pt;
         if (k % Q == 0) return identityElement();
-        uint256[2] memory result = PreCompiledLib.bn256ScalarMul(pt.x, pt.y, k);
+        if (k == 2) return add(pt, pt);
+        uint256[2] memory result = PreCompiledLib.bn128ScalarMul(pt.x, pt.y, k);
         return ECPoint(result[0], result[1]);
     }
 }

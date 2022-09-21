@@ -28,7 +28,7 @@ library Ct01ProofLib {
         Ct01Proof memory pi,
         Ct memory ct,
         ECPoint memory y
-    ) internal pure returns (bool) {
+    ) internal returns (bool) {
         require(
             ECPointLib.g().scalar(pi.rrr0).equals(
                 pi.aa0.add(ct.u.scalar(pi.c0))
@@ -73,7 +73,7 @@ library Ct01ProofLib {
         Ct01Proof[] memory pi,
         BiddingVectorItem[] memory v,
         ECPoint memory y
-    ) internal pure returns (bool) {
+    ) internal returns (bool) {
         for (uint256 i = 0; i < pi.length; i++) {
             if (valid(pi[i], v[i].ct, y) == false) return false;
         }

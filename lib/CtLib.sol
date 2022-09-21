@@ -20,17 +20,6 @@ library CtLib {
     using SameDLProofLib for SameDLProof;
     using SameDLProofLib for SameDLProof[];
 
-    function isEmpty(Ct memory ct) internal pure returns (bool) {
-        return ct.u.isEmpty() || ct.c.isEmpty();
-    }
-
-    function isEmpty(Ct[] memory ct) internal pure returns (bool) {
-        for (uint256 i = 0; i < ct.length; i++) {
-            if (isEmpty(ct[i]) == false) return false;
-        }
-        return true;
-    }
-
     function set(Ct[] storage ct1, Ct[] memory ct2) internal {
         for (uint256 i = 0; i < ct2.length; i++) {
             if (ct1.length <= i) ct1.push(ct2[i]);
@@ -39,19 +28,12 @@ library CtLib {
         while (ct1.length > ct2.length) ct1.pop();
     }
 
-    function add(Ct memory ct1, Ct memory ct2)
-        internal
-        pure
-        returns (Ct memory)
-    {
-        if (isEmpty(ct1)) return ct2;
-        if (isEmpty(ct2)) return ct1;
+    function add(Ct memory ct1, Ct memory ct2) internal returns (Ct memory) {
         return Ct(ct1.u.add(ct2.u), ct1.c.add(ct2.c));
     }
 
     function add(Ct[] memory ct1, Ct[] memory ct2)
         internal
-        pure
         returns (Ct[] memory result)
     {
         require(ct1.length == ct2.length, "ct1.length != ct2.length");
@@ -61,18 +43,12 @@ library CtLib {
         }
     }
 
-    function subC(Ct memory ct, ECPoint memory a)
-        internal
-        pure
-        returns (Ct memory)
-    {
-        if (isEmpty(ct) || a.isEmpty()) return ct;
+    function subC(Ct memory ct, ECPoint memory a) internal returns (Ct memory) {
         return Ct(ct.u, ct.c.sub(a));
     }
 
     function subC(Ct[] memory ct, ECPoint memory a)
         internal
-        pure
         returns (Ct[] memory result)
     {
         result = new Ct[](ct.length);
@@ -82,12 +58,10 @@ library CtLib {
     }
 
     function equals(Ct memory ct1, Ct memory ct2) internal pure returns (bool) {
-        if (isEmpty(ct1)) return isEmpty(ct2);
-        if (isEmpty(ct2)) return isEmpty(ct1);
         return ct1.u.equals(ct2.u) && ct1.c.equals(ct2.c);
     }
 
-    function sum(Ct[] memory ct) internal pure returns (Ct memory result) {
+    function sum(Ct[] memory ct) internal returns (Ct memory result) {
         if (ct.length > 0) {
             result = ct[0];
             for (uint256 i = 1; i < ct.length; i++) {
@@ -101,7 +75,7 @@ library CtLib {
         Bidder storage bidder,
         ECPoint memory ux,
         SameDLProof memory pi
-    ) internal view returns (Ct memory) {
+    ) internal returns (Ct memory) {
         require(
             pi.valid(ct.u, ECPointLib.g(), ux, bidder.pk),
             "Same discrete log verification failed."
@@ -114,7 +88,7 @@ library CtLib {
         Bidder storage bidder,
         ECPoint[] memory ux,
         SameDLProof[] memory pi
-    ) internal view returns (Ct[] memory result) {
+    ) internal returns (Ct[] memory result) {
         result = new Ct[](ct.length);
         for (uint256 i = 0; i < ct.length; i++) {
             result[i] = decrypt(ct[i], bidder, ux[i], pi[i]);
