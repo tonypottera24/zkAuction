@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0 <0.9.0;
-pragma experimental ABIEncoderV2;
 
 import {ECPoint, ECPointLib} from "./ECPointLib.sol";
 
@@ -34,6 +33,6 @@ library UIntLib {
     }
 
     function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        return mulmod(a, b, ECPointLib.PP);
+        return mulmod(a, b, ECPointLib.P);
     }
 }
