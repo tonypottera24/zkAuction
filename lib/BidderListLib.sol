@@ -10,8 +10,8 @@ struct Bidder {
     bool isMalicious;
     ECPoint pk;
     Ct[] a;
-    bool hasSubmitCR;
-    bool hasDecCR;
+    bool hasSubmitMixedC;
+    bool hasDecMixedC;
     bool win;
     bool payed;
 }

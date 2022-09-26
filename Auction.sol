@@ -31,15 +31,17 @@ contract Auction {
     uint256 public M;
     uint256 public P;
     uint256[7] successCount;
-    Ct[] public bidC;
-    Ct[] public bidCA;
     uint256 public minimumStake;
     uint256[] public price;
     bool public auctionAborted;
     Timer[7] public timer;
     uint64 public phase;
 
+    Ct[] public c;
+    Ct[] public mixedC;
+
     uint256 public m1stPrice;
+
     ECPoint[] public zM;
 
     function bListLength() public view returns (uint256) {
@@ -131,11 +133,11 @@ contract Auction {
             bidder.a[j] = bidder.a[j].add(bidder.a[j + 1]);
             if (j == 0) break; // j is unsigned. it will never be negative
         }
-        if (bidC.length == 0) bidC.set(bidder.a);
-        else bidC.set(bidC.add(bidder.a));
+        if (c.length == 0) c.set(bidder.a);
+        else c.set(c.add(bidder.a));
         successCount[2]++;
         if (phase2Success()) {
-            bidC.set(bidC.subC(ECPointLib.z().scalar(M)));
+            c.set(c.subC(ECPointLib.z().scalar(M)));
             timer[3].start = block.timestamp;
         }
     }
@@ -171,18 +173,18 @@ contract Auction {
         );
         Bidder storage bidder = bList.find(msg.sender);
         require(
-            bidder.hasSubmitCR == false,
-            "bidder has already submit bidCA."
+            bidder.hasSubmitMixedC == false,
+            "bidder has already submit mixedC."
         );
-        for (uint256 j = 0; j < bidCA.length; j++) {
+        for (uint256 j = 0; j < mixedC.length; j++) {
             require(
-                pi[j].valid(bidC[j].u, bidC[j].c, ctA[j].u, ctA[j].c),
+                pi[j].valid(mixedC[j].u, c[j].c, ctA[j].u, ctA[j].c),
                 "SDL proof is not valid"
             );
         }
-        if (bidCA.length == 0) bidCA.set(ctA);
-        else bidCA.set(bidCA.add(ctA));
-        bidder.hasSubmitCR = true;
+        if (mixedC.length == 0) mixedC.set(ctA);
+        else mixedC.set(mixedC.add(ctA));
+        bidder.hasSubmitMixedC = true;
         successCount[3]++;
         if (phase3Success()) timer[4].start = block.timestamp;
     }
@@ -196,7 +198,7 @@ contract Auction {
         require(phase == 3, "phase != 3");
         require(timer[3].exceeded(), "Phase 3 still have time to complete.");
         for (uint256 i = 0; i < bList.length(); i++) {
-            if (bList.get(i).hasSubmitCR == false) {
+            if (bList.get(i).hasSubmitMixedC == false) {
                 bList.get(i).isMalicious = true;
             }
         }
@@ -211,18 +213,18 @@ contract Auction {
         require(phase == 4, "phase != 4");
         require(timer[4].exceeded() == false, "Phase 4 time's up.");
         Bidder storage bidder = bList.find(msg.sender);
-        require(bidder.hasDecCR == false, "bidder has decrypt bidCA.");
-        bidCA[m1stPrice] = bidCA[m1stPrice].decrypt(bidder, ux, pi);
+        require(bidder.hasDecMixedC == false, "bidder has decrypt mixedC.");
+        mixedC[m1stPrice] = mixedC[m1stPrice].decrypt(bidder, ux, pi);
 
-        bidder.hasDecCR = true;
+        bidder.hasDecMixedC = true;
         successCount[4]++;
         if (
             successCount[4] == bList.length() &&
-            bidCA[m1stPrice].c.isIdentityElement() == false
+            mixedC[m1stPrice].c.isIdentityElement() == false
         ) {
             m1stPrice++;
             for (uint256 i = 0; i < bList.length(); i++) {
-                bList.get(i).hasDecCR = false;
+                bList.get(i).hasDecMixedC = false;
             }
             successCount[4] = 0;
         }
@@ -234,7 +236,7 @@ contract Auction {
         return
             m1stPrice < price.length &&
             successCount[4] == bList.length() &&
-            bidCA[m1stPrice].c.isIdentityElement();
+            mixedC[m1stPrice].c.isIdentityElement();
     }
 
     function phase4Resolve() public {
@@ -242,7 +244,7 @@ contract Auction {
         require(phase == 4, "phase != 4");
         require(timer[4].exceeded(), "Phase 4 still have time to complete.");
         for (uint256 i = 0; i < bList.length(); i++) {
-            if (bList.get(i).hasDecCR == false) {
+            if (bList.get(i).hasDecMixedC == false) {
                 bList.get(i).isMalicious = true;
             }
         }
