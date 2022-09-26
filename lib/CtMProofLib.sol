@@ -37,8 +37,8 @@ library CtMProofLib {
 
     function valid(
         CtMProof[] memory pi,
-        ECPoint memory y,
         Ct[] memory ct,
+        ECPoint memory y,
         ECPoint memory zM
     ) internal view returns (bool) {
         for (uint256 i = 0; i < pi.length; i++) {
