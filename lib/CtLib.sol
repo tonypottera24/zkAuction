@@ -81,7 +81,7 @@ library CtLib {
         Bidder storage bidder,
         ECPoint memory ux,
         SameDLProof memory pi
-    ) internal returns (Ct memory) {
+    ) internal view returns (Ct memory) {
         require(
             pi.valid(ct.u, ECPointLib.g(), ux, bidder.pk),
             "Same discrete log verification failed."
@@ -94,7 +94,7 @@ library CtLib {
         Bidder storage bidder,
         ECPoint[] memory ux,
         SameDLProof[] memory pi
-    ) internal returns (Ct[] memory result) {
+    ) internal view returns (Ct[] memory result) {
         result = new Ct[](ct.length);
         for (uint256 i = 0; i < ct.length; i++) {
             result[i] = decrypt(ct[i], bidder, ux[i], pi[i]);

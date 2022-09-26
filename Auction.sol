@@ -53,7 +53,7 @@ contract Auction {
         return c.length;
     }
 
-    function czM(uint256 k) public returns (Ct memory) {
+    function czM(uint256 k) public view returns (Ct memory) {
         return c[jM].ct.subC(zM[k]);
     }
 
