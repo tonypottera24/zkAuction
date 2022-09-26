@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0 <0.9.0;
 
-import {BoolLib} from "./lib/BoolLib.sol";
 import {BiddingVectorItem, BiddingVectorItemLib} from "./lib/BiddingVectorItemLib.sol";
 import {ECPoint, ECPointLib} from "./lib/ECPointLib.sol";
 import {Bidder, BidderList, BidderListLib} from "./lib/BidderListLib.sol";
@@ -13,7 +12,6 @@ import {SameDLProof, SameDLProofLib} from "./lib/SameDLProofLib.sol";
 import {Timer, TimerLib} from "./lib/TimerLib.sol";
 
 contract Auction {
-    using BoolLib for bool[];
     using BiddingVectorItemLib for BiddingVectorItem;
     using BiddingVectorItemLib for BiddingVectorItem[];
     using ECPointLib for ECPoint;

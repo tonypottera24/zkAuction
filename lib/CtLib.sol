@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0 <0.9.0;
 
-import {BoolLib} from "./BoolLib.sol";
 import {ECPoint, ECPointLib} from "./ECPointLib.sol";
 import {Bidder, BidderList, BidderListLib} from "./BidderListLib.sol";
 import {SameDLProof, SameDLProofLib} from "./SameDLProofLib.sol";
@@ -12,8 +11,6 @@ struct Ct {
 }
 
 library CtLib {
-    using BoolLib for bool;
-    using BoolLib for bool[];
     using ECPointLib for ECPoint;
     using ECPointLib for ECPoint[];
     using SameDLProofLib for SameDLProof;
