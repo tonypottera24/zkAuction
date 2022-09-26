@@ -32,7 +32,6 @@ contract Auction {
     uint256 public P;
     uint256[7] successCount;
     uint256 public minimumStake;
-    uint256[] public price;
     bool public auctionAborted;
     Timer[7] public timer;
     uint64 public phase;
@@ -41,13 +40,10 @@ contract Auction {
     Ct[] public mixedC;
     uint256 public jM;
 
+    uint256[] public price;
     uint256 public m1stPrice;
 
     ECPoint[] public zM;
-
-    function bListLength() public view returns (uint256) {
-        return bList.length();
-    }
 
     constructor(
         uint256 _M,
@@ -80,20 +76,20 @@ contract Auction {
         }
     }
 
-    function phase1BidderInit(ECPoint memory _pk, DLProof memory pi)
+    function phase1BidderInit(ECPoint memory _pk, DLProof memory _pi)
         public
         payable
     {
         require(phase == 1, "phase != 1");
-        require(timer[1].exceeded() == false, "Phase 1 time's up.");
+        require(timer[1].exceeded() == false, "timer[1].exceeded() == true");
         require(_pk.isIdentityElement() == false, "pk must not be zero");
-        require(pi.valid(ECPointLib.g(), _pk), "Discrete log proof invalid.");
+        require(_pi.valid(ECPointLib.g(), _pk), "Discrete log proof invalid.");
         require(
             msg.value >= minimumStake,
             "Bidder's deposit must larger than minimumStake."
         );
         bList.init(msg.sender, msg.value, _pk);
-        _pk = _pk.add(_pk);
+        pk = pk.add(_pk);
     }
 
     function phase1Success() public view returns (bool) {
