@@ -193,7 +193,7 @@ contract Auction {
         require(binarySearchFailed() == false, "binarySearchFailed() == true");
 
         Bidder storage bidder = bList.find(msg.sender);
-        require(bidder.hasSubmitMixedC == false, "B.hasSubmitMix == true");
+        require(bidder.hasSubmitMixedC == false, "bidder.hasSubmitMix == true");
         for (uint256 k = 0; k <= M; k++) {
             Ct memory cc = c[jM].ct;
             if (k > 0) {
