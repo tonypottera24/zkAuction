@@ -172,7 +172,7 @@ contract Auction {
         require(phase2Success() == false, "phase2Success() == true");
         require(timer[2].exceeded(), "timer[2].exceeded() == false");
         for (uint256 i = 0; i < bList.length(); i++) {
-            if (bList.get(i).v.length == 0) {
+            if (bList.get(i).v.length != L) {
                 bList.get(i).isMalicious = true;
             }
         }
