@@ -39,6 +39,7 @@ contract Auction {
 
     Ct[] public c;
     Ct[] public mixedC;
+    uint256 public jM;
 
     uint256 public m1stPrice;
 
@@ -214,15 +215,15 @@ contract Auction {
         require(timer[4].exceeded() == false, "Phase 4 time's up.");
         Bidder storage bidder = bList.find(msg.sender);
         require(bidder.hasDecMixedC == false, "bidder has decrypt mixedC.");
-        mixedC[m1stPrice] = mixedC[m1stPrice].decrypt(bidder, ux, pi);
+        mixedC[jM] = mixedC[jM].decrypt(bidder, ux, pi);
 
         bidder.hasDecMixedC = true;
         successCount[4]++;
         if (
             successCount[4] == bList.length() &&
-            mixedC[m1stPrice].c.isIdentityElement() == false
+            mixedC[jM].c.isIdentityElement() == false
         ) {
-            m1stPrice++;
+            jM++;
             for (uint256 i = 0; i < bList.length(); i++) {
                 bList.get(i).hasDecMixedC = false;
             }
@@ -234,9 +235,9 @@ contract Auction {
 
     function phase4Success() public view returns (bool) {
         return
-            m1stPrice < price.length &&
+            jM < price.length &&
             successCount[4] == bList.length() &&
-            mixedC[m1stPrice].c.isIdentityElement();
+            mixedC[jM].c.isIdentityElement();
     }
 
     function phase4Resolve() public {
@@ -258,10 +259,7 @@ contract Auction {
         require(timer[5].exceeded() == false, "Phase 5 time's up.");
         Bidder storage bidder = bList.find(msg.sender);
         require(bidder.win == false, "Bidder has already declare win.");
-        require(
-            piM.valid(bidder.a[m1stPrice], pk, zM[1]),
-            "CtMProof not valid."
-        );
+        require(piM.valid(bidder.a[jM], pk, zM[1]), "CtMProof not valid.");
         bidder.win = true;
         successCount[5]++;
         if (phase5Success()) timer[6].start = block.timestamp;
@@ -288,7 +286,7 @@ contract Auction {
         require(bidder.win, "Only winner needs to pay.");
         require(bidder.payed == false, "Only need to pay once.");
         require(
-            msg.value == price[m1stPrice - 1],
+            msg.value == price[jM - 1],
             "msg.value must equals to the second highest price."
         );
         payable(sellerAddr).transfer(msg.value);
