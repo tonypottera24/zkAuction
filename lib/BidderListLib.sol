@@ -34,10 +34,10 @@ library BidderListLib {
     ) internal {
         bList.list.push();
         bList.map[addr] = bList.list.length - 1;
-        Bidder storage B = bList.list[bList.list.length - 1];
-        B.addr = addr;
-        B.stake = stake;
-        B.pk = pk;
+        Bidder storage bidder = bList.list[bList.list.length - 1];
+        bidder.addr = addr;
+        bidder.stake = stake;
+        bidder.pk = pk;
     }
 
     function get(BidderList storage bList, uint256 i)

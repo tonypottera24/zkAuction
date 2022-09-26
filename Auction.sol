@@ -125,9 +125,9 @@ contract Auction {
         if (phase == 1 && phase1Success()) phase = 2;
         require(phase == 2, "phase != 2");
         require(timer[2].exceeded() == false, "timer[2].exceeded() == true");
-        Bidder storage B = bList.find(msg.sender);
+        Bidder storage bidder = bList.find(msg.sender);
         require(
-            B.addr != address(0),
+            bidder.addr != address(0),
             "Bidder can only submit their bids if they join in phase 1."
         );
         require(
@@ -148,8 +148,8 @@ contract Auction {
         c.append(_v);
 
         // a array
-        require(B.v.length == 0, "Already submit bid.");
-        B.v.append(_v);
+        require(bidder.v.length == 0, "Already submit bid.");
+        bidder.v.append(_v);
 
         successCount[2]++;
         if (phase2Success()) {
@@ -192,8 +192,8 @@ contract Auction {
         require(_pi.length == M + 1, "_pi.length != M + 1");
         require(binarySearchFailed() == false, "binarySearchFailed() == true");
 
-        Bidder storage B = bList.find(msg.sender);
-        require(B.hasSubmitMixedC == false, "B.hasSubmitMix == true");
+        Bidder storage bidder = bList.find(msg.sender);
+        require(bidder.hasSubmitMixedC == false, "B.hasSubmitMix == true");
         for (uint256 k = 0; k <= M; k++) {
             Ct memory cc = c[jM].ct;
             if (k > 0) {
@@ -208,7 +208,7 @@ contract Auction {
         if (mixedC.length == 0) mixedC.set(_mixedC);
         else mixedC.set(mixedC.add(_mixedC));
 
-        B.hasSubmitMixedC = true;
+        bidder.hasSubmitMixedC = true;
         successCount[3]++;
         if (phase3Success()) timer[4].start = block.timestamp;
     }
@@ -245,13 +245,13 @@ contract Auction {
         require(_ux.length == M + 1, "_ux.length != M + 1");
         require(_pi.length == M + 1, "_pi.length != M + 1");
 
-        Bidder storage B = bList.find(msg.sender);
-        require(B.hasDecMixedC == false, "bidder has decrypt bidCA.");
+        Bidder storage bidder = bList.find(msg.sender);
+        require(bidder.hasDecMixedC == false, "bidder has decrypt bidCA.");
         for (uint256 k = 0; k <= M; k++) {
-            mixedC[k] = mixedC[k].decrypt(B, _ux[k], _pi[k]);
+            mixedC[k] = mixedC[k].decrypt(bidder, _ux[k], _pi[k]);
         }
 
-        B.hasDecMixedC = true;
+        bidder.hasDecMixedC = true;
         successCount[4]++;
         if (successCount[4] == bList.length()) {
             if (phase4Success()) {
@@ -317,17 +317,17 @@ contract Auction {
         if (phase == 4 && phase4Success()) phase = 5;
         require(phase == 5, "phase != 5");
         require(timer[5].exceeded() == false, "timer[5].exceeded() == true");
-        Bidder storage B = bList.find(msg.sender);
-        require(B.win == false, "Bidder has already declare win.");
+        Bidder storage bidder = bList.find(msg.sender);
+        require(bidder.win == false, "Bidder has already declare win.");
         Ct memory v_sum;
         for (uint256 j = 0; j < L; j++) {
-            if (B.v[j].price > m1stPrice) {
-                v_sum = v_sum.add(B.v[j].ct);
+            if (bidder.v[j].price > m1stPrice) {
+                v_sum = v_sum.add(bidder.v[j].ct);
             }
         }
 
         require(_piM.valid(v_sum, pk, zM[1]), "CtMProof not valid.");
-        B.win = true;
+        bidder.win = true;
         successCount[5]++;
         if (phase5Success()) timer[6].start = block.timestamp;
     }
@@ -350,15 +350,15 @@ contract Auction {
         if (phase == 5 && phase5Success()) phase = 6;
         require(phase == 6, "phase != 6");
         require(timer[6].exceeded() == false, "timer[6].exceeded() == true");
-        Bidder storage B = bList.find(msg.sender);
-        require(B.win, "Only winner needs to pay.");
-        require(B.payed == false, "Only need to pay once.");
+        Bidder storage bidder = bList.find(msg.sender);
+        require(bidder.win, "Only winner needs to pay.");
+        require(bidder.payed == false, "Only need to pay once.");
         // require(
         //     msg.value == price[jM - 1],
         //     "msg.value must equals to the second highest price."
         // );
         payable(sellerAddr).transfer(msg.value);
-        B.payed = true;
+        bidder.payed = true;
         successCount[6]++;
         if (phase6Success()) returnAllStake();
     }
