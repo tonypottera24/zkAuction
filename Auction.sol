@@ -123,7 +123,7 @@ contract Auction {
         require(B.a.length == 0, "Already submit bid.");
         require(
             _v.length == price.length && _v_01_proof.length == price.length,
-            "bid.length, pi01.length, price.length must be same."
+            "bid.length != price.length || pi01.length != price.length"
         );
         require(_v_01_proof.valid(_v, pk), "Ct01Proof not valid.");
         require(_v_sum_proof.valid(_v.sum(), pk, zM[1]), "CtMProof not valid.");
