@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.7.0 <0.9.0;
-pragma experimental ABIEncoderV2;
+pragma solidity >=0.8.0 <0.9.0;
 
 import {UIntLib} from "./UIntLib.sol";
 import {ECPoint, ECPointLib} from "./ECPointLib.sol";
@@ -26,10 +25,11 @@ library CtMProofLib {
         CtMProof memory pi,
         Ct memory ct,
         ECPoint memory y,
-        uint256 m
+        uint256 m,
+        ECPoint[] memory zM
     ) internal returns (bool) {
-        ECPoint memory zm = ECPointLib.z().scalar(m);
-        ECPoint memory ctC = ct.c.sub(zm);
+        // ECPoint memory zm = ECPointLib.z().scalar(m);
+        ECPoint memory ctC = ct.c.sub(zM[m]);
         require(
             pi.piA.valid(y, ctC, pi.ya, pi.ctCA),
             "pi.piA is not a valid proof"
@@ -41,10 +41,11 @@ library CtMProofLib {
         CtMProof[] memory pi,
         ECPoint memory y,
         Ct[] memory ct,
-        uint256 m
+        uint256 m,
+        ECPoint[] memory zM
     ) internal returns (bool) {
         for (uint256 i = 0; i < pi.length; i++) {
-            if (valid(pi[i], ct[i], y, m) == false) return false;
+            if (valid(pi[i], ct[i], y, m, zM) == false) return false;
         }
         return true;
     }

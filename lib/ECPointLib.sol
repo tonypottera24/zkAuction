@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.7.0 <0.9.0;
-pragma experimental ABIEncoderV2;
+pragma solidity >=0.8.0 <0.9.0;
 
 import {UIntLib} from "./UIntLib.sol";
 import {PreCompiledLib} from "./PreCompiledLib.sol";
@@ -33,8 +32,8 @@ library ECPointLib {
         return ECPoint(GX, GY);
     }
 
-    function z() internal returns (ECPoint memory) {
-        return scalar(g(), 2);
+    function z() internal view returns (ECPoint memory) {
+        return add(g(), g());
     }
 
     function isIdentityElement(ECPoint memory pt) internal pure returns (bool) {
@@ -72,6 +71,7 @@ library ECPointLib {
 
     function add(ECPoint memory pt1, ECPoint memory pt2)
         internal
+        view
         returns (ECPoint memory)
     {
         if (isIdentityElement(pt1)) return pt2;
@@ -87,6 +87,7 @@ library ECPointLib {
 
     function add(ECPoint[] memory pt1, ECPoint[] memory pt2)
         internal
+        view
         returns (ECPoint[] memory)
     {
         require(pt1.length == pt2.length, "a.length != b.length");
@@ -99,21 +100,23 @@ library ECPointLib {
 
     function sub(ECPoint memory pt1, ECPoint memory pt2)
         internal
+        view
         returns (ECPoint memory)
     {
         return add(pt1, neg(pt2));
     }
 
-    function subG(ECPoint memory pt) internal returns (ECPoint memory) {
+    function subG(ECPoint memory pt) internal view returns (ECPoint memory) {
         return sub(pt, g());
     }
 
-    function subZ(ECPoint memory pt) internal returns (ECPoint memory) {
+    function subZ(ECPoint memory pt) internal view returns (ECPoint memory) {
         return sub(pt, z());
     }
 
     function scalar(ECPoint memory pt, uint256 k)
         internal
+        view
         returns (ECPoint memory)
     {
         if (isIdentityElement(pt)) return pt;

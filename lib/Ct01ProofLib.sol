@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.7.0 <0.9.0;
-pragma experimental ABIEncoderV2;
+pragma solidity >=0.8.0 <0.9.0;
 
 import {UIntLib} from "./UIntLib.sol";
 import {ECPoint, ECPointLib} from "./ECPointLib.sol";
@@ -28,7 +27,7 @@ library Ct01ProofLib {
         Ct01Proof memory pi,
         Ct memory ct,
         ECPoint memory y
-    ) internal returns (bool) {
+    ) internal view returns (bool) {
         require(
             ECPointLib.g().scalar(pi.rrr0).equals(
                 pi.aa0.add(ct.u.scalar(pi.c0))
@@ -66,14 +65,16 @@ library Ct01ProofLib {
             )
         );
         uint256 c = uint256(digest);
-        return pi.c0 + pi.c1 == c;
+        unchecked {
+            return pi.c0 + pi.c1 == c;
+        }
     }
 
     function valid(
         Ct01Proof[] memory pi,
         BiddingVectorItem[] memory v,
         ECPoint memory y
-    ) internal returns (bool) {
+    ) internal view returns (bool) {
         for (uint256 i = 0; i < pi.length; i++) {
             if (valid(pi[i], v[i].ct, y) == false) return false;
         }
