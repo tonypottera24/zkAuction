@@ -115,9 +115,9 @@ contract Auction {
         if (phase == 1 && phase1Success()) phase = 2;
         require(phase == 2, "phase != 2");
         require(timer[2].exceeded() == false, "timer[2].exceeded() == true");
-        Bidder storage B = bList.find(msg.sender);
+        Bidder storage bidder = bList.find(msg.sender);
         require(
-            B.addr != address(0),
+            bidder.addr != address(0),
             "Bidder can only submit their bids if they join in phase 1."
         );
         require(
@@ -127,16 +127,16 @@ contract Auction {
         require(_v_01_proof.valid(_v, pk), "Ct01Proof not valid.");
         require(_v_sum_proof.valid(_v.sum(), pk, zM[1]), "CtMProof not valid.");
 
-        require(B.a.length == 0, "Already submit bid.");
-        B.a.set(_v);
+        require(bidder.a.length == 0, "Already submit bid.");
+        bidder.a.set(_v);
 
-        for (uint256 j = B.a.length - 2; j >= 0; j--) {
-            B.a[j] = B.a[j].add(B.a[j + 1]);
+        for (uint256 j = bidder.a.length - 2; j >= 0; j--) {
+            bidder.a[j] = bidder.a[j].add(bidder.a[j + 1]);
             if (j == 0) break; // j is unsigned. it will never be negative
         }
 
-        if (c.length == 0) c.set(B.a);
-        else c.set(c.add(B.a));
+        if (c.length == 0) c.set(bidder.a);
+        else c.set(c.add(bidder.a));
 
         successCount[2]++;
 
