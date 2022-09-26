@@ -126,7 +126,7 @@ contract Auction {
             bidder.addr != address(0),
             "Bidder can only submit their bids if they join in phase 1."
         );
-        require(bidder.bidA.length == 0, "Already submit bid.");
+        require(bidder.a.length == 0, "Already submit bid.");
         require(
             bid.length == price.length && pi01.length == price.length,
             "bid.length, pi01.length, price.length must be same."
@@ -134,13 +134,13 @@ contract Auction {
         require(pi01.valid(bid, pk), "Ct01Proof not valid.");
         require(piM.valid(pk, bid.sum(), zM[1]), "CtMProof not valid.");
 
-        bidder.bidA.set(bid);
-        for (uint256 j = bidder.bidA.length - 2; j >= 0; j--) {
-            bidder.bidA[j] = bidder.bidA[j].add(bidder.bidA[j + 1]);
+        bidder.a.set(bid);
+        for (uint256 j = bidder.a.length - 2; j >= 0; j--) {
+            bidder.a[j] = bidder.a[j].add(bidder.a[j + 1]);
             if (j == 0) break; // j is unsigned. it will never be negative
         }
-        if (bidC.length == 0) bidC.set(bidder.bidA);
-        else bidC.set(bidC.add(bidder.bidA));
+        if (bidC.length == 0) bidC.set(bidder.a);
+        else bidC.set(bidC.add(bidder.a));
         phase2SuccessCount++;
         if (phase2Success()) {
             bidC.set(bidC.subC(ECPointLib.z().scalar(M)));
@@ -157,7 +157,7 @@ contract Auction {
         require(isPhase2(), "Phase 2 completed successfully.");
         require(timer[1].timesUp(), "Phase 2 still have time to complete.");
         for (uint256 i = 0; i < bList.length(); i++) {
-            if (bList.get(i).bidA.length != price.length) {
+            if (bList.get(i).a.length != price.length) {
                 bList.get(i).malicious = true;
             }
         }
@@ -185,7 +185,7 @@ contract Auction {
         );
         Bidder storage bidder = bList.find(msg.sender);
         require(
-            bidder.hasSubmitBidCA == false,
+            bidder.hasSubmitCR == false,
             "bidder has already submit bidCA."
         );
         for (uint256 j = 0; j < bidCA.length; j++) {
@@ -196,7 +196,7 @@ contract Auction {
         }
         if (bidCA.length == 0) bidCA.set(ctA);
         else bidCA.set(bidCA.add(ctA));
-        bidder.hasSubmitBidCA = true;
+        bidder.hasSubmitCR = true;
         phase3SuccessCount++;
         if (phase3Success()) timer[3].start = block.timestamp;
     }
@@ -210,7 +210,7 @@ contract Auction {
         require(isPhase3(), "Phase 3 completed successfully.");
         require(timer[2].timesUp(), "Phase 3 still have time to complete.");
         for (uint256 i = 0; i < bList.length(); i++) {
-            if (bList.get(i).hasSubmitBidCA == false) {
+            if (bList.get(i).hasSubmitCR == false) {
                 bList.get(i).malicious = true;
             }
         }
@@ -232,10 +232,10 @@ contract Auction {
         require(isPhase4(), "Phase 4 not completed yet.");
         require(timer[3].timesUp() == false, "Phase 4 time's up.");
         Bidder storage bidder = bList.find(msg.sender);
-        require(bidder.hasDecBidCA == false, "bidder has decrypt bidCA.");
+        require(bidder.hasDecCR == false, "bidder has decrypt bidCA.");
         bidCA[jM] = bidCA[jM].decrypt(bidder, ux, pi);
 
-        bidder.hasDecBidCA = true;
+        bidder.hasDecCR = true;
         phase4SuccessCount++;
         if (
             phase4SuccessCount == bList.length() &&
@@ -243,7 +243,7 @@ contract Auction {
         ) {
             jM++;
             for (uint256 i = 0; i < bList.length(); i++) {
-                bList.get(i).hasDecBidCA = false;
+                bList.get(i).hasDecCR = false;
             }
             phase4SuccessCount = 0;
         }
@@ -263,7 +263,7 @@ contract Auction {
         require(isPhase4(), "Phase 4 completed successfully.");
         require(timer[3].timesUp(), "Phase 4 still have time to complete.");
         for (uint256 i = 0; i < bList.length(); i++) {
-            if (bList.get(i).hasDecBidCA == false) {
+            if (bList.get(i).hasDecCR == false) {
                 bList.get(i).malicious = true;
             }
         }
@@ -285,7 +285,7 @@ contract Auction {
         require(timer[4].timesUp() == false, "Phase 5 time's up.");
         Bidder storage bidder = bList.find(msg.sender);
         require(bidder.win == false, "Bidder has already declare win.");
-        require(piM.valid(pk, bidder.bidA[jM], 1), "CtMProof not valid.");
+        require(piM.valid(pk, bidder.a[jM], 1), "CtMProof not valid.");
         bidder.win = true;
         phase5SuccessCount++;
         if (phase5Success()) timer[5].start = block.timestamp;

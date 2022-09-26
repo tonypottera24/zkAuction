@@ -9,9 +9,9 @@ struct Bidder {
     uint256 stake;
     bool isMalicious;
     ECPoint pk;
-    Ct[] bidA;
-    bool hasSubmitBidCA;
-    bool hasDecBidCA;
+    Ct[] a;
+    bool hasSubmitCR;
+    bool hasDecCR;
     bool win;
     bool payed;
 }
