@@ -32,12 +32,13 @@ contract Auction {
     uint256[7] successCount;
     Ct[] public bidC;
     Ct[] public bidCA;
-    uint256 public jM;
     uint256 public minimumStake;
     uint256[] public price;
     bool public auctionAborted;
     Timer[7] public timer;
     uint64 public phase;
+
+    uint256 public m1stPrice;
     ECPoint[] public zM;
 
     function bListLength() public view returns (uint256) {
@@ -232,15 +233,15 @@ contract Auction {
         require(timer[3].exceeded() == false, "Phase 4 time's up.");
         Bidder storage bidder = bList.find(msg.sender);
         require(bidder.hasDecCR == false, "bidder has decrypt bidCA.");
-        bidCA[jM] = bidCA[jM].decrypt(bidder, ux, pi);
+        bidCA[m1stPrice] = bidCA[m1stPrice].decrypt(bidder, ux, pi);
 
         bidder.hasDecCR = true;
         successCount[4]++;
         if (
             successCount[4] == bList.length() &&
-            bidCA[jM].c.isIdentityElement() == false
+            bidCA[m1stPrice].c.isIdentityElement() == false
         ) {
-            jM++;
+            m1stPrice++;
             for (uint256 i = 0; i < bList.length(); i++) {
                 bList.get(i).hasDecCR = false;
             }
@@ -252,9 +253,9 @@ contract Auction {
 
     function phase4Success() public view returns (bool) {
         return
-            jM < price.length &&
+            m1stPrice < price.length &&
             successCount[4] == bList.length() &&
-            bidCA[jM].c.isIdentityElement();
+            bidCA[m1stPrice].c.isIdentityElement();
     }
 
     function phase4Resolve() public {
@@ -284,7 +285,7 @@ contract Auction {
         require(timer[4].exceeded() == false, "Phase 5 time's up.");
         Bidder storage bidder = bList.find(msg.sender);
         require(bidder.win == false, "Bidder has already declare win.");
-        require(piM.valid(pk, bidder.a[jM], 1), "CtMProof not valid.");
+        require(piM.valid(pk, bidder.a[m1stPrice], 1), "CtMProof not valid.");
         bidder.win = true;
         successCount[5]++;
         if (phase5Success()) timer[5].start = block.timestamp;
@@ -319,7 +320,7 @@ contract Auction {
         require(bidder.win, "Only winner needs to pay.");
         require(bidder.payed == false, "Only need to pay once.");
         require(
-            msg.value == price[jM - 1],
+            msg.value == price[m1stPrice - 1],
             "msg.value must equals to the second highest price."
         );
         payable(sellerAddr).transfer(msg.value);
