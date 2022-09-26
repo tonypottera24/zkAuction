@@ -160,7 +160,7 @@ contract Auction {
                 bList.get(i).isMalicious = true;
             }
         }
-        compensateBidderMalicious();
+        compensateHonestBidders();
         auctionAborted = true;
         // NOTE: remove malicious bidder and continue.
     }
@@ -208,7 +208,7 @@ contract Auction {
                 bList.get(i).isMalicious = true;
             }
         }
-        compensateBidderMalicious();
+        compensateHonestBidders();
         auctionAborted = true;
     }
 
@@ -255,7 +255,7 @@ contract Auction {
                 bList.get(i).isMalicious = true;
             }
         }
-        compensateBidderMalicious();
+        compensateHonestBidders();
         auctionAborted = true;
     }
 
@@ -316,7 +316,7 @@ contract Auction {
                 bList.get(i).isMalicious = true;
             }
         }
-        if (bList.isMalicious()) compensateBidderMalicious();
+        if (bList.isMalicious()) compensateHonestBidders();
         else returnAllStake();
         auctionAborted = true;
     }
@@ -339,7 +339,7 @@ contract Auction {
         }
     }
 
-    function compensateBidderMalicious() internal {
+    function compensateHonestBidders() internal {
         require(bList.isMalicious(), "Bidders are not malicious.");
         uint256 d = 0;
         uint256 maliciousBidderCount = 0;
