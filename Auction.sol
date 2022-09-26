@@ -34,13 +34,14 @@ contract Auction {
     uint256 public M;
     uint256 public L;
     uint256[7] successCount;
-    BiddingVectorItem[] public c;
     uint256 public minimumStake;
     bool public auctionAborted;
     Timer[7] public timer;
     uint64 public phase;
 
+    BiddingVectorItem[] public c;
     Ct[] public mixedC;
+
     uint256 public jM;
     uint256 public binarySearchL;
     uint256 public binarySearchR;
