@@ -63,7 +63,9 @@ library Ct01ProofLib {
             )
         );
         uint256 c = uint256(digest);
-        return pi.c0 + pi.c1 == c;
+        unchecked {
+            return pi.c0 + pi.c1 == c;
+        }
     }
 
     function valid(

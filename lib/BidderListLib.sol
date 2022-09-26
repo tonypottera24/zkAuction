@@ -5,10 +5,9 @@ import {ECPoint} from "./ECPointLib.sol";
 import {Ct, CtLib} from "./CtLib.sol";
 
 struct Bidder {
-    uint256 index;
     address addr;
-    uint256 balance;
-    bool malicious;
+    uint256 stake;
+    bool isMalicious;
     ECPoint pk;
     Ct[] bidA;
     bool hasSubmitBidCA;
@@ -29,16 +28,15 @@ library BidderListLib {
     function init(
         BidderList storage bList,
         address addr,
-        uint256 balance,
+        uint256 stake,
         ECPoint memory pk
     ) internal {
         bList.list.push();
         bList.map[addr] = bList.list.length - 1;
-        Bidder storage bidder = bList.list[bList.list.length - 1];
-        bidder.index = bList.list.length - 1;
-        bidder.addr = addr;
-        bidder.balance = balance;
-        bidder.pk = pk;
+        Bidder storage B = bList.list[bList.list.length - 1];
+        B.addr = addr;
+        B.stake = stake;
+        B.pk = pk;
     }
 
     function get(BidderList storage bList, uint256 i)
@@ -63,9 +61,13 @@ library BidderListLib {
         return bList.list.length;
     }
 
-    function malicious(BidderList storage bList) internal view returns (bool) {
+    function isMalicious(BidderList storage bList)
+        internal
+        view
+        returns (bool)
+    {
         for (uint256 i = 0; i < length(bList); i++) {
-            if (get(bList, i).malicious) return true;
+            if (get(bList, i).isMalicious) return true;
         }
         return false;
     }
