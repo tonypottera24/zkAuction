@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.7.0 <0.8.0;
-pragma experimental ABIEncoderV2;
+pragma solidity >=0.8.0 <0.9.0;
 
 import {UIntLib} from "./UIntLib.sol";
 import {ECPoint, ECPointLib} from "./ECPointLib.sol";
@@ -52,18 +51,17 @@ library Ct01ProofLib {
             return false;
         }
 
-        bytes32 digest =
-            keccak256(
-                abi.encodePacked(
-                    y.pack(),
-                    ct.u.pack(),
-                    ct.c.pack(),
-                    pi.aa0.pack(),
-                    pi.bb0.pack(),
-                    pi.aa1.pack(),
-                    pi.bb1.pack()
-                )
-            );
+        bytes32 digest = keccak256(
+            abi.encodePacked(
+                y.pack(),
+                ct.u.pack(),
+                ct.c.pack(),
+                pi.aa0.pack(),
+                pi.bb0.pack(),
+                pi.aa1.pack(),
+                pi.bb1.pack()
+            )
+        );
         uint256 c = uint256(digest);
         return pi.c0 + pi.c1 == c;
     }

@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.7.0 <0.8.0;
-pragma experimental ABIEncoderV2;
+pragma solidity >=0.8.0 <0.9.0;
 
-import {BoolLib} from "./lib/BoolLib.sol";
 import {ECPoint, ECPointLib} from "./lib/ECPointLib.sol";
 import {Bidder, BidderList, BidderListLib} from "./lib/BidderListLib.sol";
 import {Ct, CtLib} from "./lib/CtLib.sol";
@@ -13,7 +11,6 @@ import {SameDLProof, SameDLProofLib} from "./lib/SameDLProofLib.sol";
 import {Timer, TimerLib} from "./lib/TimerLib.sol";
 
 contract Auction {
-    using BoolLib for bool[];
     using ECPointLib for ECPoint;
     using BidderListLib for BidderList;
     using CtLib for Ct;
