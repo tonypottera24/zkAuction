@@ -120,7 +120,6 @@ contract Auction {
             B.addr != address(0),
             "Bidder can only submit their bids if they join in phase 1."
         );
-        require(B.a.length == 0, "Already submit bid.");
         require(
             _v.length == price.length && _v_01_proof.length == price.length,
             "bid.length != price.length || pi01.length != price.length"
@@ -128,16 +127,21 @@ contract Auction {
         require(_v_01_proof.valid(_v, pk), "Ct01Proof not valid.");
         require(_v_sum_proof.valid(_v.sum(), pk, zM[1]), "CtMProof not valid.");
 
+        require(B.a.length == 0, "Already submit bid.");
         B.a.set(_v);
+
         for (uint256 j = B.a.length - 2; j >= 0; j--) {
             B.a[j] = B.a[j].add(B.a[j + 1]);
             if (j == 0) break; // j is unsigned. it will never be negative
         }
+
         if (c.length == 0) c.set(B.a);
         else c.set(c.add(B.a));
+
         successCount[2]++;
+
         if (phase2Success()) {
-            c.set(c.subC(ECPointLib.z().scalar(M)));
+            c.set(c.subC(zM[M]));
             timer[3].start = block.timestamp;
         }
     }
@@ -149,7 +153,8 @@ contract Auction {
     function phase2Resolve() public {
         require(auctionAborted == false, "Problem resolved, auction aborted.");
         require(phase == 2, "phase != 2");
-        require(timer[2].exceeded(), "Phase 2 still have time to complete.");
+        require(phase2Success() == false, "phase2Success() == true");
+        require(timer[2].exceeded(), "timer[2].exceeded() == false");
         for (uint256 i = 0; i < bList.length(); i++) {
             if (bList.get(i).a.length != price.length) {
                 bList.get(i).isMalicious = true;
@@ -196,7 +201,8 @@ contract Auction {
     function phase3Resolve() public {
         require(auctionAborted == false, "Problem resolved, auction aborted.");
         require(phase == 3, "phase != 3");
-        require(timer[3].exceeded(), "Phase 3 still have time to complete.");
+        require(phase3Success() == false, "phase3Success() == true");
+        require(timer[3].exceeded(), "timer[3].exceeded() == false");
         for (uint256 i = 0; i < bList.length(); i++) {
             if (bList.get(i).hasSubmitMixedC == false) {
                 bList.get(i).isMalicious = true;
@@ -242,7 +248,8 @@ contract Auction {
     function phase4Resolve() public {
         require(auctionAborted == false, "Problem resolved, auction aborted.");
         require(phase == 4, "phase != 4");
-        require(timer[4].exceeded(), "Phase 4 still have time to complete.");
+        require(phase4Success() == false, "phase4Success() == true");
+        require(timer[4].exceeded(), "timer[4].exceeded() == false");
         for (uint256 i = 0; i < bList.length(); i++) {
             if (bList.get(i).hasDecMixedC == false) {
                 bList.get(i).isMalicious = true;
@@ -271,7 +278,8 @@ contract Auction {
     function phase5Resolve() public {
         require(auctionAborted == false, "Problem resolved, auction aborted.");
         require(phase == 5, "phase != 5");
-        require(timer[5].exceeded(), "Phase 5 still have time to complete.");
+        require(phase5Success() == false, "phase5Success() == true");
+        require(timer[5].exceeded(), "timer[5].exceeded() == false");
         require(successCount[5] == 0, "There are still some winners.");
         returnAllStake();
         auctionAborted = true;
@@ -280,7 +288,7 @@ contract Auction {
     function phase6Payment() public payable {
         if (phase == 5 && phase5Success()) phase = 6;
         require(phase == 6, "phase != 6");
-        require(timer[6].exceeded() == false, "Phase 6 time's up.");
+        require(timer[6].exceeded() == false, "timer[6].exceeded() == true");
         Bidder storage bidder = bList.find(msg.sender);
         require(bidder.win, "Only winner needs to pay.");
         require(bidder.payed == false, "Only need to pay once.");
@@ -301,7 +309,8 @@ contract Auction {
     function phase6Resolve() public {
         require(auctionAborted == false, "Problem resolved, auction aborted.");
         require(phase == 6, "phase != 6");
-        require(timer[6].exceeded(), "Phase 6 still have time to complete.");
+        require(phase6Success() == false, "phase6Success() == true");
+        require(timer[6].exceeded(), "timer[6].exceeded() == false");
         for (uint256 i = 0; i < bList.length(); i++) {
             if (bList.get(i).win && bList.get(i).payed == false) {
                 bList.get(i).isMalicious = true;
