@@ -24,12 +24,17 @@ library CtLib {
         while (ct1.length > ct2.length) ct1.pop();
     }
 
-    function add(Ct memory ct1, Ct memory ct2) internal returns (Ct memory) {
+    function add(Ct memory ct1, Ct memory ct2)
+        internal
+        view
+        returns (Ct memory)
+    {
         return Ct(ct1.u.add(ct2.u), ct1.c.add(ct2.c));
     }
 
     function add(Ct[] memory ct1, Ct[] memory ct2)
         internal
+        view
         returns (Ct[] memory result)
     {
         require(ct1.length == ct2.length, "ct1.length != ct2.length");
@@ -39,12 +44,17 @@ library CtLib {
         }
     }
 
-    function subC(Ct memory ct, ECPoint memory a) internal returns (Ct memory) {
+    function subC(Ct memory ct, ECPoint memory a)
+        internal
+        view
+        returns (Ct memory)
+    {
         return Ct(ct.u, ct.c.sub(a));
     }
 
     function subC(Ct[] memory ct, ECPoint memory a)
         internal
+        view
         returns (Ct[] memory result)
     {
         result = new Ct[](ct.length);
@@ -57,7 +67,7 @@ library CtLib {
         return ct1.u.equals(ct2.u) && ct1.c.equals(ct2.c);
     }
 
-    function sum(Ct[] memory ct) internal returns (Ct memory result) {
+    function sum(Ct[] memory ct) internal view returns (Ct memory result) {
         if (ct.length > 0) {
             result = ct[0];
             for (uint256 i = 1; i < ct.length; i++) {

@@ -21,7 +21,7 @@ library SameDLProofLib {
         ECPoint memory g2,
         ECPoint memory y1,
         ECPoint memory y2
-    ) internal returns (bool) {
+    ) internal view returns (bool) {
         bytes32 digest = keccak256(
             abi.encodePacked(
                 g1.pack(),
@@ -44,7 +44,7 @@ library SameDLProofLib {
         ECPoint[] memory g2,
         ECPoint[] memory y1,
         ECPoint[] memory y2
-    ) internal returns (bool) {
+    ) internal view returns (bool) {
         for (uint256 i = 0; i < pi.length; i++) {
             if (valid(pi[i], g1[i], g2[i], y1[i], y2[i]) == false) return false;
         }
