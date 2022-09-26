@@ -21,9 +21,9 @@ library ECPointLib {
         115792089210356248762697446949407573530086143415290314195533631308867097853948;
     uint256 public constant BB =
         41058363725152142129326129780047268409114441015993725554835256314039467401291;
-    uint256 public constant PP =
+    uint256 public constant P =
         115792089210356248762697446949407573530086143415290314195533631308867097853951;
-    uint256 public constant QQ =
+    uint256 public constant Q =
         115792089210356248762697446949407573529996955224135760342422259061068512044369;
 
     function zero() internal pure returns (ECPoint memory) {
@@ -83,8 +83,14 @@ library ECPointLib {
         pure
         returns (ECPoint memory)
     {
-        (uint256 x, uint256 y) =
-            EllipticCurve.ecAdd(pt1.x, pt1.y, pt2.x, pt2.y, AA, PP);
+        (uint256 x, uint256 y) = EllipticCurve.ecAdd(
+            pt1.x,
+            pt1.y,
+            pt2.x,
+            pt2.y,
+            AA,
+            PP
+        );
         return ECPoint(x, y);
     }
 
@@ -106,8 +112,14 @@ library ECPointLib {
         pure
         returns (ECPoint memory)
     {
-        (uint256 x, uint256 y) =
-            EllipticCurve.ecSub(pt1.x, pt1.y, pt2.x, pt2.y, AA, PP);
+        (uint256 x, uint256 y) = EllipticCurve.ecSub(
+            pt1.x,
+            pt1.y,
+            pt2.x,
+            pt2.y,
+            AA,
+            PP
+        );
         return ECPoint(x, y);
     }
 
@@ -124,8 +136,13 @@ library ECPointLib {
         pure
         returns (ECPoint memory)
     {
-        (uint256 x, uint256 y) =
-            EllipticCurve.ecMul(k % QQ, pt.x, pt.y, AA, PP);
+        (uint256 x, uint256 y) = EllipticCurve.ecMul(
+            k % QQ,
+            pt.x,
+            pt.y,
+            AA,
+            PP
+        );
         return ECPoint(x, y);
     }
 }
