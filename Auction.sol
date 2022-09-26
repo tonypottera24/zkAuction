@@ -158,7 +158,7 @@ contract Auction {
             binarySearchR = c.length;
             jM = (binarySearchL + binarySearchR) / 2;
 
-            timer[2].start = block.timestamp;
+            timer[3].start = block.timestamp;
         }
     }
 
