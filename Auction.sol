@@ -81,7 +81,6 @@ contract Auction {
         minimumStake = _minimumStake;
         phase = 1;
 
-        // binary search
         zM.push(ECPointLib.identityElement());
         for (uint256 k = 1; k <= _M; k++) {
             zM.push(zM[k - 1].add(ECPointLib.z()));
