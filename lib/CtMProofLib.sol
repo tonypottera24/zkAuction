@@ -25,11 +25,9 @@ library CtMProofLib {
         CtMProof memory pi,
         Ct memory ct,
         ECPoint memory y,
-        uint256 m,
-        ECPoint[] memory zM
-    ) internal returns (bool) {
-        // ECPoint memory zm = ECPointLib.z().scalar(m);
-        ECPoint memory ctC = ct.c.sub(zM[m]);
+        ECPoint memory zM
+    ) internal view returns (bool) {
+        ECPoint memory ctC = ct.c.sub(zM);
         require(
             pi.piA.valid(y, ctC, pi.ya, pi.ctCA),
             "pi.piA is not a valid proof"
@@ -41,11 +39,10 @@ library CtMProofLib {
         CtMProof[] memory pi,
         ECPoint memory y,
         Ct[] memory ct,
-        uint256 m,
-        ECPoint[] memory zM
-    ) internal returns (bool) {
+        ECPoint memory zM
+    ) internal view returns (bool) {
         for (uint256 i = 0; i < pi.length; i++) {
-            if (valid(pi[i], ct[i], y, m, zM) == false) return false;
+            if (valid(pi[i], ct[i], y, zM) == false) return false;
         }
         return true;
     }

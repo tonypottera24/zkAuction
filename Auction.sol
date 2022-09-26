@@ -141,7 +141,7 @@ contract Auction {
             );
         }
         require(_v_01_proof.valid(_v, pk), "Ct01Proof not valid.");
-        require(_v_sum_proof.valid(_v.sum(), pk, 1, zM), "CtMProof not valid.");
+        require(_v_sum_proof.valid(_v.sum(), pk, zM[1]), "CtMProof not valid.");
 
         // c array
         // Append v to c first, v will be modified later.
@@ -326,7 +326,7 @@ contract Auction {
             }
         }
 
-        require(_piM.valid(v_sum, pk, 1, zM), "CtMProof not valid.");
+        require(_piM.valid(v_sum, pk, zM[1]), "CtMProof not valid.");
         B.win = true;
         successCount[5]++;
         if (phase5Success()) timer[6].start = block.timestamp;
