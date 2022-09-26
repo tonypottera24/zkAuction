@@ -162,18 +162,18 @@ contract Auction {
         }
         compensateHonestBidders();
         auctionAborted = true;
-        // NOTE: remove malicious bidder and continue.
+        // TODO: remove malicious bidder and continue.
     }
 
     function phase3M1stPriceDecisionPrepare(
-        Ct[] memory ctA,
-        SameDLProof[] memory pi
+        Ct[] memory _mixedC,
+        SameDLProof[] memory _pi
     ) public {
         if (phase == 2 && phase2Success()) phase = 3;
         require(phase == 3, "phase != 3");
         require(timer[3].exceeded() == false, "Phase 3 time's up.");
         require(
-            pi.length == price.length && ctA.length == price.length,
+            _pi.length == price.length && ctA.length == price.length,
             "pi, ctA, price must have same length."
         );
         Bidder storage bidder = bList.find(msg.sender);
@@ -183,12 +183,12 @@ contract Auction {
         );
         for (uint256 j = 0; j < mixedC.length; j++) {
             require(
-                pi[j].valid(mixedC[j].u, c[j].c, ctA[j].u, ctA[j].c),
+                _pi[j].valid(mixedC[j].u, c[j].c, _mixedC[j].u, _mixedC[j].c),
                 "SDL proof is not valid"
             );
         }
-        if (mixedC.length == 0) mixedC.set(ctA);
-        else mixedC.set(mixedC.add(ctA));
+        if (mixedC.length == 0) mixedC.set(_mixedC);
+        else mixedC.set(mixedC.add(_mixedC));
         bidder.hasSubmitMixedC = true;
         successCount[3]++;
         if (phase3Success()) timer[4].start = block.timestamp;
