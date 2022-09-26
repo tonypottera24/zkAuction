@@ -29,7 +29,6 @@ contract Auction {
     BidderList bList;
     ECPoint public pk;
     uint256 public M;
-    uint256 public P;
     uint256[7] successCount;
     uint256 public minimumStake;
     bool public auctionAborted;
@@ -45,6 +44,10 @@ contract Auction {
 
     ECPoint[] public zM;
 
+    function priceLength() public view returns (uint256) {
+        return price.length;
+    }
+
     constructor(
         uint256 _M,
         uint256[] memory _price,
@@ -56,7 +59,6 @@ contract Auction {
         M = _M;
         require(_price.length >= 2, "price.length must be at least 2.");
         price = _price;
-        P = _price.length;
         require(
             _timeout.length == timer.length,
             "timeout.length != timer.length"
@@ -99,39 +101,40 @@ contract Auction {
     function phase1Resolve() public {
         require(auctionAborted == false, "Problem resolved, auction aborted.");
         require(phase == 1, "phase != 1");
-        require(timer[1].exceeded(), "Phase 1 still have time to complete.");
+        require(phase1Success() == false, "phase1Success() == true");
+        require(timer[1].exceeded(), "timer[1].exceeded() == false");
         returnAllStake();
         auctionAborted = true;
     }
 
     function phase2BidderSubmitBid(
-        Ct[] memory bid,
-        Ct01Proof[] memory pi01,
-        CtMProof memory piM
+        Ct[] memory _v,
+        Ct01Proof[] memory _v_01_proof,
+        CtMProof memory _v_sum_proof
     ) public {
         if (phase == 1 && phase1Success()) phase = 2;
         require(phase == 2, "phase != 2");
-        require(timer[2].exceeded() == false, "Phase 2 time's up.");
-        Bidder storage bidder = bList.find(msg.sender);
+        require(timer[2].exceeded() == false, "timer[2].exceeded() == true");
+        Bidder storage B = bList.find(msg.sender);
         require(
-            bidder.addr != address(0),
+            B.addr != address(0),
             "Bidder can only submit their bids if they join in phase 1."
         );
-        require(bidder.a.length == 0, "Already submit bid.");
+        require(B.a.length == 0, "Already submit bid.");
         require(
-            bid.length == price.length && pi01.length == price.length,
+            _v.length == price.length && _v_01_proof.length == price.length,
             "bid.length, pi01.length, price.length must be same."
         );
-        require(pi01.valid(bid, pk), "Ct01Proof not valid.");
-        require(piM.valid(bid.sum(), pk, zM[1]), "CtMProof not valid.");
+        require(_v_01_proof.valid(_v, pk), "Ct01Proof not valid.");
+        require(_v_sum_proof.valid(_v.sum(), pk, zM[1]), "CtMProof not valid.");
 
-        bidder.a.set(bid);
-        for (uint256 j = bidder.a.length - 2; j >= 0; j--) {
-            bidder.a[j] = bidder.a[j].add(bidder.a[j + 1]);
+        B.a.set(_v);
+        for (uint256 j = B.a.length - 2; j >= 0; j--) {
+            B.a[j] = B.a[j].add(B.a[j + 1]);
             if (j == 0) break; // j is unsigned. it will never be negative
         }
-        if (c.length == 0) c.set(bidder.a);
-        else c.set(c.add(bidder.a));
+        if (c.length == 0) c.set(B.a);
+        else c.set(c.add(B.a));
         successCount[2]++;
         if (phase2Success()) {
             c.set(c.subC(ECPointLib.z().scalar(M)));
