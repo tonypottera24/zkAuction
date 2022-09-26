@@ -162,25 +162,22 @@ contract Auction {
         }
         compensateHonestBidders();
         auctionAborted = true;
-        // TODO: remove malicious bidder and continue.
+        // TODO remove malicious bidder and continue.
     }
 
-    function phase3M1stPriceDecisionPrepare(
+    function phase3M1stPriceDecisionMix(
         Ct[] memory _mixedC,
         SameDLProof[] memory _pi
     ) public {
         if (phase == 2 && phase2Success()) phase = 3;
         require(phase == 3, "phase != 3");
-        require(timer[3].exceeded() == false, "Phase 3 time's up.");
+        require(timer[3].exceeded() == false, "timer[3].exceeded() == true");
         require(
-            _pi.length == price.length && ctA.length == price.length,
+            _pi.length == price.length && _mixedC.length == price.length,
             "pi, ctA, price must have same length."
         );
         Bidder storage bidder = bList.find(msg.sender);
-        require(
-            bidder.hasSubmitMixedC == false,
-            "bidder has already submit mixedC."
-        );
+        require(bidder.hasSubmitMixedC == false, "bidder.hasSubmitMix == true");
         for (uint256 j = 0; j < mixedC.length; j++) {
             require(
                 _pi[j].valid(mixedC[j].u, c[j].c, _mixedC[j].u, _mixedC[j].c),
