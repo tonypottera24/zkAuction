@@ -9,7 +9,7 @@ struct Bidder {
     address addr;
     uint256 balance;
     bool malicious;
-    ECPoint elgamalY;
+    ECPoint pk;
     Ct[] bidA;
     bool hasSubmitBidCA;
     bool hasDecBidCA;
@@ -30,7 +30,7 @@ library BidderListLib {
         BidderList storage bList,
         address addr,
         uint256 balance,
-        ECPoint memory elgamalY
+        ECPoint memory pk
     ) internal {
         bList.list.push();
         bList.map[addr] = bList.list.length - 1;
@@ -38,7 +38,7 @@ library BidderListLib {
         bidder.index = bList.list.length - 1;
         bidder.addr = addr;
         bidder.balance = balance;
-        bidder.elgamalY = elgamalY;
+        bidder.pk = pk;
     }
 
     function get(BidderList storage bList, uint256 i)

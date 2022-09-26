@@ -27,7 +27,7 @@ contract Auction {
 
     address sellerAddr;
     BidderList bList;
-    ECPoint public elgamalY;
+    ECPoint public pk;
     uint256 M;
     uint256 phase2SuccessCount;
     uint256 phase3SuccessCount;
@@ -51,7 +51,7 @@ contract Auction {
     }
 
     function eccTest() public view returns (ECPoint memory) {
-        return elgamalY;
+        return pk;
     }
 
     constructor(
@@ -82,24 +82,20 @@ contract Auction {
         return phase1Success() == false;
     }
 
-    function phase1BidderInit(ECPoint memory _elgamalY, DLProof memory pi)
+    function phase1BidderInit(ECPoint memory _pk, DLProof memory pi)
         public
         payable
     {
         require(isPhase1(), "Phase 0 not completed yet.");
         require(timer[0].timesUp() == false, "Phase 1 time's up.");
-        require(_elgamalY.isNotSet() == false, "elgamalY must not be zero");
-        require(
-            pi.valid(ECPointLib.g(), _elgamalY),
-            "Discrete log proof invalid."
-        );
+        require(_pk.isIdentityElement() == false, "pk must not be zero");
+        require(pi.valid(ECPointLib.g(), _pk), "Discrete log proof invalid.");
         require(
             msg.value >= bidderBalanceLimit,
             "Bidder's deposit must larger than bidderBalanceLimit."
         );
-        bList.init(msg.sender, msg.value, _elgamalY);
-        if (elgamalY.isNotSet()) elgamalY = _elgamalY;
-        else elgamalY = elgamalY.add(_elgamalY);
+        bList.init(msg.sender, msg.value, _pk);
+        _pk = _pk.add(_pk);
     }
 
     function phase1Success() public view returns (bool) {
@@ -135,8 +131,8 @@ contract Auction {
             bid.length == price.length && pi01.length == price.length,
             "bid.length, pi01.length, price.length must be same."
         );
-        require(pi01.valid(bid, elgamalY), "Ct01Proof not valid.");
-        require(piM.valid(elgamalY, bid.sum(), 1), "CtMProof not valid.");
+        require(pi01.valid(bid, pk), "Ct01Proof not valid.");
+        require(piM.valid(pk, bid.sum(), zM[1]), "CtMProof not valid.");
 
         bidder.bidA.set(bid);
         for (uint256 j = bidder.bidA.length - 2; j >= 0; j--) {
@@ -289,7 +285,7 @@ contract Auction {
         require(timer[4].timesUp() == false, "Phase 5 time's up.");
         Bidder storage bidder = bList.find(msg.sender);
         require(bidder.win == false, "Bidder has already declare win.");
-        require(piM.valid(elgamalY, bidder.bidA[jM], 1), "CtMProof not valid.");
+        require(piM.valid(pk, bidder.bidA[jM], 1), "CtMProof not valid.");
         bidder.win = true;
         phase5SuccessCount++;
         if (phase5Success()) timer[5].start = block.timestamp;

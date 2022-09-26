@@ -16,22 +16,12 @@ library CtLib {
     using SameDLProofLib for SameDLProof;
     using SameDLProofLib for SameDLProof[];
 
-    function isNotSet(Ct memory ct) internal pure returns (bool) {
-        return ct.u.isNotSet() || ct.c.isNotSet();
-    }
-
-    function isNotSet(Ct[] memory ct) internal pure returns (bool) {
-        for (uint256 i = 0; i < ct.length; i++) {
-            if (isNotSet(ct[i]) == false) return false;
-        }
-        return true;
-    }
-
     function set(Ct[] storage ct1, Ct[] memory ct2) internal {
         for (uint256 i = 0; i < ct2.length; i++) {
             if (ct1.length <= i) ct1.push(ct2[i]);
             else ct1[i] = ct2[i];
         }
+        while (ct1.length > ct2.length) ct1.pop();
     }
 
     function add(Ct memory ct1, Ct memory ct2)
@@ -73,7 +63,7 @@ library CtLib {
         }
     }
 
-    function equals(Ct memory ct1, Ct memory ct2) internal view returns (bool) {
+    function equals(Ct memory ct1, Ct memory ct2) internal pure returns (bool) {
         return ct1.u.equals(ct2.u) && ct1.c.equals(ct2.c);
     }
 
@@ -93,7 +83,7 @@ library CtLib {
         SameDLProof memory pi
     ) internal view returns (Ct memory) {
         require(
-            pi.valid(ct.u, ECPointLib.g(), ux, bidder.elgamalY),
+            pi.valid(ct.u, ECPointLib.g(), ux, bidder.pk),
             "Same discrete log verification failed."
         );
         return Ct(ct.u, ct.c.sub(ux));

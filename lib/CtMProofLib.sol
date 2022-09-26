@@ -23,8 +23,8 @@ library CtMProofLib {
 
     function valid(
         CtMProof memory pi,
-        ECPoint memory y,
         Ct memory ct,
+        ECPoint memory y,
         ECPoint memory zM
     ) internal view returns (bool) {
         ECPoint memory ctC = ct.c.sub(zM);
@@ -37,12 +37,12 @@ library CtMProofLib {
 
     function valid(
         CtMProof[] memory pi,
-        ECPoint memory y,
         Ct[] memory ct,
+        ECPoint memory y,
         ECPoint memory zM
     ) internal view returns (bool) {
         for (uint256 i = 0; i < pi.length; i++) {
-            if (valid(pi[i], y, ct[i], zM) == false) return false;
+            if (valid(pi[i], ct[i], y, zM) == false) return false;
         }
         return true;
     }
