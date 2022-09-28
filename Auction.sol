@@ -353,10 +353,6 @@ contract Auction {
         Bidder storage bidder = bList.find(msg.sender);
         require(bidder.win, "Only winner needs to pay.");
         require(bidder.payed == false, "Only need to pay once.");
-        // require(
-        //     msg.value == price[jM - 1],
-        //     "msg.value must equals to the second highest price."
-        // );
         payable(sellerAddr).transfer(msg.value);
         bidder.payed = true;
         successCount[6]++;
