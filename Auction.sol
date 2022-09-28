@@ -173,9 +173,10 @@ contract Auction {
         require(phase == 3, "phase != 3");
         require(timer[3].exceeded() == false, "timer[3].exceeded() == true");
         require(
-            _pi.length == price.length && _mixedC.length == price.length,
-            "pi, ctA, price must have same length."
+            _mixedC.length == price.length,
+            "_mixedC.length != price.length"
         );
+        require(_pi.length == price.length, "_pi.length != price.length");
         Bidder storage bidder = bList.find(msg.sender);
         require(bidder.hasSubmitMixedC == false, "bidder.hasSubmitMix == true");
         for (uint256 j = 0; j < mixedC.length; j++) {
@@ -184,8 +185,10 @@ contract Auction {
                 "SDL proof is not valid"
             );
         }
+
         if (mixedC.length == 0) mixedC.set(_mixedC);
         else mixedC.set(mixedC.add(_mixedC));
+
         bidder.hasSubmitMixedC = true;
         successCount[3]++;
         if (phase3Success()) timer[4].start = block.timestamp;
@@ -209,15 +212,15 @@ contract Auction {
         auctionAborted = true;
     }
 
-    function phase4M1stPriceDecision(ECPoint memory ux, SameDLProof memory pi)
+    function phase4M1stPriceDecision(ECPoint memory _ux, SameDLProof memory _pi)
         public
     {
         if (phase == 3 && phase3Success()) phase = 4;
         require(phase == 4, "phase != 4");
-        require(timer[4].exceeded() == false, "Phase 4 time's up.");
+        require(timer[4].exceeded() == false, "timer[4].exceeded() == true");
         Bidder storage bidder = bList.find(msg.sender);
         require(bidder.hasDecMixedC == false, "bidder has decrypt mixedC.");
-        mixedC[jM] = mixedC[jM].decrypt(bidder, ux, pi);
+        mixedC[jM] = mixedC[jM].decrypt(bidder, _ux, _pi);
 
         bidder.hasDecMixedC = true;
         successCount[4]++;
@@ -256,16 +259,19 @@ contract Auction {
         auctionAborted = true;
     }
 
-    function phase5WinnerDecision(CtMProof memory piM) public {
+    function phase5WinnerDecision(CtMProof memory _piM) public {
         if (phase == 4 && phase4Success()) phase = 5;
         require(phase == 5, "phase != 5");
-        require(timer[5].exceeded() == false, "Phase 5 time's up.");
+        require(timer[5].exceeded() == false, "timer[5].exceeded() == true");
         Bidder storage bidder = bList.find(msg.sender);
         require(bidder.win == false, "Bidder has already declare win.");
-        require(piM.valid(bidder.a[jM], pk, zM[1]), "CtMProof not valid.");
+        require(_piM.valid(bidder.a[jM], pk, zM[1]), "CtMProof not valid.");
         bidder.win = true;
         successCount[5]++;
-        if (phase5Success()) timer[6].start = block.timestamp;
+        if (phase5Success()) {
+            m1stPrice = price[jM - 1];
+            timer[6].start = block.timestamp;
+        }
     }
 
     function phase5Success() public view returns (bool) {
@@ -289,10 +295,7 @@ contract Auction {
         Bidder storage bidder = bList.find(msg.sender);
         require(bidder.win, "Only winner needs to pay.");
         require(bidder.payed == false, "Only need to pay once.");
-        require(
-            msg.value == price[jM - 1],
-            "msg.value must equals to the second highest price."
-        );
+        require(msg.value == m1stPrice, "msg.value != m1stPrice");
         payable(sellerAddr).transfer(msg.value);
         bidder.payed = true;
         successCount[6]++;
