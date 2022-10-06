@@ -3,18 +3,19 @@ pragma solidity >=0.7.0 <0.8.0;
 pragma experimental ABIEncoderV2;
 
 import {BoolLib} from "./lib/BoolLib.sol";
-import {ECPoint, ECPointLib} from "./lib/ECPointLib.sol";
+import {BigNumber} from "./lib/BigNumber.sol";
+import {BigNumberLib} from "./lib/BigNumberLib.sol";
 import {Bidder, BidderList, BidderListLib} from "./lib/BidderListLib.sol";
 import {Ct, CtLib} from "./lib/CtLib.sol";
-import {Ct01Proof, Ct01ProofLib} from "./lib/Ct01ProofLib.sol";
 import {CtMProof, CtMProofLib} from "./lib/CtMProofLib.sol";
+import {Ct01Proof, Ct01ProofLib} from "./lib/Ct01ProofLib.sol";
 import {DLProof, DLProofLib} from "./lib/DLProofLib.sol";
 import {SameDLProof, SameDLProofLib} from "./lib/SameDLProofLib.sol";
 import {Timer, TimerLib} from "./lib/TimerLib.sol";
 
 contract Auction {
     using BoolLib for bool[];
-    using ECPointLib for ECPoint;
+    using BigNumberLib for BigNumber.instance;
     using BidderListLib for BidderList;
     using CtLib for Ct;
     using CtLib for Ct[];
@@ -30,8 +31,10 @@ contract Auction {
 
     address sellerAddr;
     BidderList bList;
-    ECPoint public elgamalY;
+    BigNumber.instance public elgamalY;
     uint256 M;
+    BigNumber.instance bigM;
+    BigNumber.instance zmInv;
     uint256 phase2SuccessCount;
     uint256 phase3SuccessCount;
     uint256 phase4SuccessCount;
@@ -53,12 +56,9 @@ contract Auction {
         return price.length;
     }
 
-    function eccTest() public view returns (ECPoint memory) {
-        return elgamalY;
-    }
-
     constructor(
         uint256 _M,
+        BigNumber.instance memory _zmInv,
         uint256[] memory _price,
         uint256[6] memory duration,
         uint256 _balanceLimit
@@ -66,6 +66,12 @@ contract Auction {
         sellerAddr = msg.sender;
         require(1 <= _M, "M < 1");
         M = _M;
+        bigM = BigNumberLib.from_uint256(M);
+        require(
+            BigNumberLib.z().pow(bigM).mul(_zmInv).isIdentityElement(),
+            "zmInv is not correct."
+        );
+        zmInv = _zmInv;
         require(_price.length >= 2, "price.length must be at least 2.");
         price = _price;
         require(
@@ -85,15 +91,15 @@ contract Auction {
         return phase1Success() == false;
     }
 
-    function phase1BidderInit(ECPoint memory _elgamalY, DLProof memory pi)
-        public
-        payable
-    {
+    function phase1BidderInit(
+        BigNumber.instance memory _elgamalY,
+        DLProof memory pi
+    ) public payable {
         require(isPhase1(), "Phase 0 not completed yet.");
         require(timer[0].timesUp() == false, "Phase 1 time's up.");
         require(_elgamalY.isNotSet() == false, "elgamalY must not be zero");
         require(
-            pi.valid(ECPointLib.g(), _elgamalY),
+            pi.valid(BigNumberLib.g(), _elgamalY),
             "Discrete log proof invalid."
         );
         require(
@@ -102,7 +108,7 @@ contract Auction {
         );
         bList.init(msg.sender, msg.value, _elgamalY);
         if (elgamalY.isNotSet()) elgamalY = _elgamalY;
-        else elgamalY = elgamalY.add(_elgamalY);
+        else elgamalY = elgamalY.mul(_elgamalY);
     }
 
     function phase1Success() public view returns (bool) {
@@ -138,19 +144,27 @@ contract Auction {
             bid.length == price.length && pi01.length == price.length,
             "bid.length, pi01.length, price.length must be same."
         );
-        require(pi01.valid(bid, elgamalY), "Ct01Proof not valid.");
-        require(piM.valid(elgamalY, bid.sum(), 1), "CtMProof not valid.");
 
+        require(pi01.valid(bid, elgamalY), "Ct01Proof not valid.");
+        require(
+            piM.valid(
+                elgamalY,
+                bid.prod(),
+                BigNumberLib.one(),
+                BigNumberLib.zInv()
+            ),
+            "CtMProof not valid."
+        );
         bidder.bidA.set(bid);
         for (uint256 j = bidder.bidA.length - 2; j >= 0; j--) {
-            bidder.bidA[j] = bidder.bidA[j].add(bidder.bidA[j + 1]);
+            bidder.bidA[j] = bidder.bidA[j].mul(bidder.bidA[j + 1]);
             if (j == 0) break; // j is unsigned. it will never be negative
         }
         if (bidC.length == 0) bidC.set(bidder.bidA);
-        else bidC.set(bidC.add(bidder.bidA));
+        else bidC.set(bidC.mul(bidder.bidA));
         phase2SuccessCount++;
         if (phase2Success()) {
-            bidC.set(bidC.subC(ECPointLib.z().scalar(M)));
+            bidC.set(bidC.mulC(zmInv));
             timer[2].start = block.timestamp;
         }
     }
@@ -202,7 +216,7 @@ contract Auction {
             );
         }
         if (bidCA.length == 0) bidCA.set(ctA);
-        else bidCA.set(bidCA.add(ctA));
+        else bidCA.set(bidCA.mul(ctA));
         bidder.hasSubmitBidCA = true;
         phase3SuccessCount++;
         if (phase3Success()) timer[3].start = block.timestamp;
@@ -233,14 +247,16 @@ contract Auction {
             phase4Success() == false;
     }
 
-    function phase4M1stPriceDecision(ECPoint memory ux, SameDLProof memory pi)
-        public
-    {
+    function phase4M1stPriceDecision(
+        BigNumber.instance memory ux,
+        BigNumber.instance memory uxInv,
+        SameDLProof memory pi
+    ) public {
         require(isPhase4(), "Phase 4 not completed yet.");
         require(timer[3].timesUp() == false, "Phase 4 time's up.");
         Bidder storage bidder = bList.find(msg.sender);
         require(bidder.hasDecBidCA == false, "bidder has decrypt bidCA.");
-        bidCA[jM] = bidCA[jM].decrypt(bidder, ux, pi);
+        bidCA[jM] = bidCA[jM].decrypt(bidder, ux, uxInv, pi);
 
         bidder.hasDecBidCA = true;
         phase4SuccessCount++;
@@ -292,7 +308,15 @@ contract Auction {
         require(timer[4].timesUp() == false, "Phase 5 time's up.");
         Bidder storage bidder = bList.find(msg.sender);
         require(bidder.win == false, "Bidder has already declare win.");
-        require(piM.valid(elgamalY, bidder.bidA[jM], 1), "CtMProof not valid.");
+        require(
+            piM.valid(
+                elgamalY,
+                bidder.bidA[jM],
+                BigNumberLib.one(),
+                BigNumberLib.zInv()
+            ),
+            "CtMProof not valid."
+        );
         bidder.win = true;
         phase5SuccessCount++;
         if (phase5Success()) timer[5].start = block.timestamp;

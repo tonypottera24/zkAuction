@@ -2,15 +2,16 @@
 pragma solidity >=0.7.0 <0.8.0;
 pragma experimental ABIEncoderV2;
 
-import {ECPoint} from "./ECPointLib.sol";
 import {Ct, CtLib} from "./CtLib.sol";
+import {BigNumber} from "./BigNumber.sol";
+import {BigNumberLib} from "./BigNumberLib.sol";
 
 struct Bidder {
     uint256 index;
     address addr;
     uint256 balance;
     bool malicious;
-    ECPoint elgamalY;
+    BigNumber.instance elgamalY;
     Ct[] bidA;
     bool hasSubmitBidCA;
     bool hasDecBidCA;
@@ -26,12 +27,13 @@ struct BidderList {
 library BidderListLib {
     using CtLib for Ct;
     using CtLib for Ct[];
+    using BigNumberLib for BigNumber.instance;
 
     function init(
         BidderList storage bList,
         address addr,
         uint256 balance,
-        ECPoint memory elgamalY
+        BigNumber.instance memory elgamalY
     ) internal {
         bList.list.push();
         bList.map[addr] = bList.list.length - 1;
