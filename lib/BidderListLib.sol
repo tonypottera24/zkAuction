@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.4.22 <0.8.0;
+pragma solidity >=0.4.22 <0.7.0;
 pragma experimental ABIEncoderV2;
 
 import {Ct, CtLib} from "./CtLib.sol";
 import {Bid01Proof} from "./Bid01ProofLib.sol";
+import {BigNumber} from "./BigNumber.sol";
+import {BigNumberLib} from "./BigNumberLib.sol";
 import {Bid01Proof, Bid01ProofLib} from "./Bid01ProofLib.sol";
 
 struct Bidder {
@@ -12,7 +14,7 @@ struct Bidder {
     uint256 balance;
     bool malicious;
     Ct[] bid;
-    Ct bidSum;
+    Ct bidProd;
     Bid01Proof[] bid01Proof;
     Ct[] bidA;
 }
@@ -25,6 +27,7 @@ struct BidderList {
 library BidderListLib {
     using CtLib for Ct;
     using CtLib for Ct[];
+    using BigNumberLib for BigNumber.instance;
     using Bid01ProofLib for Bid01Proof;
     using Bid01ProofLib for Bid01Proof[];
 
@@ -34,7 +37,9 @@ library BidderListLib {
         BidderList storage bList,
         address payable addr,
         uint256 balance,
-        Ct[] memory bid
+        Ct[] memory bid,
+        BigNumber.instance storage zInv,
+        BigNumber.instance storage p
     ) internal {
         bList.list.push();
         bList.map[addr] = bList.list.length - 1;
@@ -48,12 +53,13 @@ library BidderListLib {
             bidder.bidA.push(bid[j]);
             bidder.bid01Proof.push();
         }
-        bidder.bid01Proof.setU(bid);
-        bidder.bidSum = bid.sum();
+        bidder.bid01Proof.setU(bid, zInv, p);
+        bidder.bidProd = bid.prod(p);
         require(bidder.bidA.length >= 2, "bidder.bidA.length < 2");
         for (uint256 j = bidder.bidA.length - 2; j >= 0; j--) {
-            bidder.bidA[j] = bList.list[bList.list.length - 1].bidA[j].add(
-                bList.list[bList.list.length - 1].bidA[j + 1]
+            bidder.bidA[j] = bList.list[bList.list.length - 1].bidA[j].mul(
+                bList.list[bList.list.length - 1].bidA[j + 1],
+                p
             );
             if (j == 0) break;
         }

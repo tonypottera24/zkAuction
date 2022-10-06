@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.4.22 <0.8.0;
+pragma solidity >=0.4.22 <0.7.0;
 pragma experimental ABIEncoderV2;
 
-import {ECPointExt} from "./ECPointLib.sol";
+import {BigNumber} from "./BigNumber.sol";
 
 struct Auctioneer {
     uint256 index;
     address payable addr;
     uint256 balance;
-    ECPointExt elgamalY;
+    BigNumber.instance elgamalY;
     bool malicious;
 }
 
