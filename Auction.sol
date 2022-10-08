@@ -181,7 +181,7 @@ contract Auction {
         require(bidder.hasSubmitMixedC == false, "bidder.hasSubmitMix == true");
         for (uint256 j = 0; j < mixedC.length; j++) {
             require(
-                _pi[j].valid(mixedC[j].u, c[j].c, _mixedC[j].u, _mixedC[j].c),
+                _pi[j].valid(c[j].u, c[j].c, _mixedC[j].u, _mixedC[j].c),
                 "SDL proof is not valid"
             );
         }
