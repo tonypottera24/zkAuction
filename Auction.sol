@@ -200,7 +200,7 @@ contract Auction {
                 cc = cc.subC(zM[k]);
             }
             require(
-                _pi[k].valid(cc.u, cc.c, _mixedC[k].u, _mixedC[k].c),
+                _pi[k].valid(cc.r, cc.c, _mixedC[k].r, _mixedC[k].c),
                 "SDL proof is not valid"
             );
         }

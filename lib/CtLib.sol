@@ -6,8 +6,8 @@ import {Bidder, BidderList, BidderListLib} from "./BidderListLib.sol";
 import {SameDLProof, SameDLProofLib} from "./SameDLProofLib.sol";
 
 struct Ct {
-    ECPoint u;
     ECPoint c;
+    ECPoint r;
 }
 
 library CtLib {
@@ -29,7 +29,7 @@ library CtLib {
         view
         returns (Ct memory)
     {
-        return Ct(ct1.u.add(ct2.u), ct1.c.add(ct2.c));
+        return Ct(ct1.c.add(ct2.c), ct1.r.add(ct2.r));
     }
 
     function add(Ct[] memory ct1, Ct[] memory ct2)
@@ -49,7 +49,7 @@ library CtLib {
         view
         returns (Ct memory)
     {
-        return Ct(ct.u, ct.c.sub(a));
+        return Ct(ct.c.sub(a), ct.r);
     }
 
     function subC(Ct[] memory ct, ECPoint memory a)
@@ -64,7 +64,7 @@ library CtLib {
     }
 
     function equals(Ct memory ct1, Ct memory ct2) internal pure returns (bool) {
-        return ct1.u.equals(ct2.u) && ct1.c.equals(ct2.c);
+        return ct1.c.equals(ct2.c) && ct1.r.equals(ct2.r);
     }
 
     function sum(Ct[] memory ct) internal view returns (Ct memory result) {
@@ -83,10 +83,10 @@ library CtLib {
         SameDLProof memory pi
     ) internal view returns (Ct memory) {
         require(
-            pi.valid(ct.u, ECPointLib.g(), ux, bidder.pk),
+            pi.valid(ct.r, ECPointLib.g(), ux, bidder.pk),
             "Same discrete log verification failed."
         );
-        return Ct(ct.u, ct.c.sub(ux));
+        return Ct(ct.r, ct.c.sub(ux));
     }
 
     function decrypt(

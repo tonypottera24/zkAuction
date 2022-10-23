@@ -30,7 +30,7 @@ library Ct01ProofLib {
     ) internal view returns (bool) {
         require(
             ECPointLib.g().scalar(pi.rrr0).equals(
-                pi.aa0.add(ct.u.scalar(pi.c0))
+                pi.aa0.add(ct.r.scalar(pi.c0))
             ),
             "Ct01Proof 1"
         );
@@ -40,11 +40,11 @@ library Ct01ProofLib {
         ECPoint memory s4R = pi.bb1.add(ct.c.subZ().scalar(pi.c1));
         if (
             ECPointLib.g().scalar(pi.rrr0).equals(
-                pi.aa0.add(ct.u.scalar(pi.c0))
+                pi.aa0.add(ct.r.scalar(pi.c0))
             ) ==
             false ||
             ECPointLib.g().scalar(pi.rrr1).equals(
-                pi.aa1.add(ct.u.scalar(pi.c1))
+                pi.aa1.add(ct.r.scalar(pi.c1))
             ) ==
             false ||
             s3L.equals(s3R) == false ||
@@ -56,8 +56,8 @@ library Ct01ProofLib {
         bytes32 digest = keccak256(
             abi.encodePacked(
                 y.pack(),
-                ct.u.pack(),
                 ct.c.pack(),
+                ct.r.pack(),
                 pi.aa0.pack(),
                 pi.bb0.pack(),
                 pi.aa1.pack(),
