@@ -26,12 +26,6 @@ library Ct01ProofLib {
         Ct memory ct,
         ECPoint memory y
     ) internal view returns (bool) {
-        require(
-            ECPointLib.g().scalar(pi.rrr0).equals(
-                pi.aa0.add(ct.u.scalar(pi.c0))
-            ),
-            "Ct01Proof 1"
-        );
         ECPoint memory s3L = y.scalar(pi.rrr0);
         ECPoint memory s3R = pi.bb0.add(ct.c.scalar(pi.c0));
         ECPoint memory s4L = y.scalar(pi.rrr1);
