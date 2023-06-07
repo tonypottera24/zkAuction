@@ -357,7 +357,7 @@ contract Auction {
         require(timer[4].exceeded() == false, "timer[4].exceeded() == true");
         Bidder storage bidder = bList.find(msg.sender);
         require(bidder.win == false, "Bidder has already declare win.");
-        if (m1stPrice[roundJ + 1] == 0) {
+        if (m1stPrice[roundJ] == 0) {
             bidder.W = bidder.W.add(bidder.S);
         }
         require(_piM.valid(bidder.W, pk, zM[1]), "CtMProof not valid.");
