@@ -9,10 +9,7 @@ import {SameDLProof, SameDLProofLib} from "./SameDLProofLib.sol";
 import {DLProof, DLProofLib} from "./DLProofLib.sol";
 
 struct CtMProof {
-    ECPoint ya;
-    ECPoint ctCA;
-    SameDLProof piA;
-    DLProof piR;
+    SameDLProof pi;
 }
 
 library CtMProofLib {
@@ -27,12 +24,7 @@ library CtMProofLib {
         ECPoint memory y,
         ECPoint memory zM
     ) internal view returns (bool) {
-        ECPoint memory ctC = ct.c.sub(zM);
-        require(
-            pi.piA.valid(y, ctC, pi.ya, pi.ctCA),
-            "pi.piA is not a valid proof"
-        );
-        return pi.piR.valid(pi.ya, pi.ctCA);
+        return pi.pi.valid(ECPointLib.g(), y, ct.u, ct.c.sub(zM));
     }
 
     function valid(

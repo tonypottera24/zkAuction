@@ -24,43 +24,46 @@ library CtLib {
         while (ct1.length > ct2.length) ct1.pop();
     }
 
-    function add(Ct memory ct1, Ct memory ct2)
-        internal
-        view
-        returns (Ct memory)
-    {
+    function add(
+        Ct memory ct1,
+        Ct memory ct2
+    ) internal view returns (Ct memory) {
         return Ct(ct1.u.add(ct2.u), ct1.c.add(ct2.c));
     }
 
-    function add(Ct[] memory ct1, Ct[] memory ct2)
-        internal
-        view
-        returns (Ct[] memory result)
-    {
+    function add(
+        Ct[] memory ct1,
+        Ct[] memory ct2
+    ) internal view returns (Ct[] memory) {
         require(ct1.length == ct2.length, "ct1.length != ct2.length");
-        result = new Ct[](ct1.length);
         for (uint256 i = 0; i < ct1.length; i++) {
-            result[i] = add(ct1[i], ct2[i]);
+            ct1[i] = add(ct1[i], ct2[i]);
         }
+        return ct1;
     }
 
-    function subC(Ct memory ct, ECPoint memory a)
-        internal
-        view
-        returns (Ct memory)
-    {
+    function sub(
+        Ct memory ct1,
+        Ct memory ct2
+    ) internal view returns (Ct memory) {
+        return Ct(ct1.u.sub(ct2.u), ct1.c.sub(ct2.c));
+    }
+
+    function subC(
+        Ct memory ct,
+        ECPoint memory a
+    ) internal view returns (Ct memory) {
         return Ct(ct.u, ct.c.sub(a));
     }
 
-    function subC(Ct[] memory ct, ECPoint memory a)
-        internal
-        view
-        returns (Ct[] memory result)
-    {
-        result = new Ct[](ct.length);
+    function subC(
+        Ct[] memory ct,
+        ECPoint memory a
+    ) internal view returns (Ct[] memory) {
         for (uint256 i = 0; i < ct.length; i++) {
-            result[i] = subC(ct[i], a);
+            ct[i] = subC(ct[i], a);
         }
+        return ct;
     }
 
     function equals(Ct memory ct1, Ct memory ct2) internal pure returns (bool) {
@@ -94,10 +97,10 @@ library CtLib {
         Bidder storage bidder,
         ECPoint[] memory ux,
         SameDLProof[] memory pi
-    ) internal view returns (Ct[] memory result) {
-        result = new Ct[](ct.length);
+    ) internal view returns (Ct[] memory) {
         for (uint256 i = 0; i < ct.length; i++) {
-            result[i] = decrypt(ct[i], bidder, ux[i], pi[i]);
+            ct[i] = decrypt(ct[i], bidder, ux[i], pi[i]);
         }
+        return ct;
     }
 }

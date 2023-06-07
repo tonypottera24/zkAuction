@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0 <0.9.0;
 
-import {BiddingVectorItem, BiddingVectorItemLib} from "./lib/BiddingVectorItemLib.sol";
 import {ECPoint, ECPointLib} from "./lib/ECPointLib.sol";
 import {Bidder, BidderList, BidderListLib} from "./lib/BidderListLib.sol";
 import {Ct, CtLib} from "./lib/CtLib.sol";
@@ -12,8 +11,6 @@ import {SameDLProof, SameDLProofLib} from "./lib/SameDLProofLib.sol";
 import {Timer, TimerLib} from "./lib/TimerLib.sol";
 
 contract Auction {
-    using BiddingVectorItemLib for BiddingVectorItem;
-    using BiddingVectorItemLib for BiddingVectorItem[];
     using ECPointLib for ECPoint;
     using BidderListLib for BidderList;
     using CtLib for Ct;
@@ -38,24 +35,20 @@ contract Auction {
     bool public auctionAborted;
     Timer[7] public timer;
     uint64 public phase;
-
-    BiddingVectorItem[] public c;
-    Ct[] public mixedC;
-
-    uint256 public jM;
-    uint256 public binarySearchL;
-    uint256 public binarySearchR;
-
-    uint256 public m1stPrice;
-
+    uint256[] public m1stPrice;
     ECPoint[] public zM;
 
-    function cLength() public view returns (uint256) {
-        return c.length;
-    }
+    uint256 public roundJ;
+    uint256 public phase3ZkAndCount;
+    uint256 public phase3MixCount;
+    uint256 public phase3MatchCount;
 
-    function czM(uint256 k) public view returns (Ct memory) {
-        return c[jM].ct.subC(zM[k]);
+    Ct public WSTotal;
+    Ct[] public WSTotalzM;
+    Ct[] public mixedWS;
+
+    function test(uint256 i) public view returns (Ct memory) {
+        return bList.get(i).C;
     }
 
     constructor(
@@ -86,12 +79,15 @@ contract Auction {
         for (uint256 k = 1; k <= _M; k++) {
             zM.push(zM[k - 1].add(ECPointLib.z()));
         }
+        for (uint256 j = 0; j < L; j++) {
+            m1stPrice.push(0);
+        }
     }
 
-    function phase1BidderInit(ECPoint memory _pk, DLProof memory _pi)
-        public
-        payable
-    {
+    function phase1BidderInit(
+        ECPoint memory _pk,
+        DLProof memory _pi
+    ) public payable {
         require(phase == 1, "phase != 1");
         require(timer[1].exceeded() == false, "timer[1].exceeded() == true");
         require(_pk.isIdentityElement() == false, "pk must not be zero");
@@ -118,9 +114,12 @@ contract Auction {
     }
 
     function phase2BidderSubmitBid(
-        BiddingVectorItem[] memory _v,
-        Ct01Proof[] memory _v_01_proof,
-        CtMProof memory _v_sum_proof
+        Ct[] memory _V,
+        Ct01Proof[] memory _V_01_proof,
+        Ct memory _C,
+        CtMProof memory _C_proof,
+        Ct memory _W,
+        CtMProof memory _W_proof
     ) public {
         if (phase == 1 && phase1Success()) phase = 2;
         require(phase == 2, "phase != 2");
@@ -131,33 +130,22 @@ contract Auction {
             "Bidder can only submit their bids if they join in phase 1."
         );
         require(
-            _v.length == L && _v_01_proof.length == L,
+            _V.length == L && _V_01_proof.length == L,
             "bid.length != L || pi01.length != L"
         );
-        for (uint256 j = 1; j < _v.length; j++) {
-            require(
-                _v[j].price > _v[j - 1].price,
-                "v.price must be incremental"
-            );
-        }
-        require(_v_01_proof.valid(_v, pk), "Ct01Proof not valid.");
-        require(_v_sum_proof.valid(_v.sum(), pk, zM[1]), "CtMProof not valid.");
+        require(_V_01_proof.valid(_V, pk), "Ct01Proof not valid.");
 
-        // c array
-        // Append v to c first, v will be modified later.
-        c.append(_v);
-
-        // a array
-        require(bidder.v.length == 0, "Already submit bid.");
-        bidder.v.append(_v);
+        require(bidder.V.length == 0, "Already submit bid.");
+        bidder.V = _V;
+        require(_C_proof.valid(_C, pk, zM[1]), "_C_proof not valid.");
+        bidder.C = _C;
+        require(_W_proof.valid(_W, pk, zM[0]), "_W_proof not valid.");
+        bidder.W = _W;
 
         successCount[2]++;
         if (phase2Success()) {
-            c.distinct_sort();
-
-            binarySearchR = c.length;
-            jM = (binarySearchL + binarySearchR) / 2;
-
+            roundJ = L - 1;
+            phase = 3;
             timer[3].start = block.timestamp;
         }
     }
@@ -172,127 +160,213 @@ contract Auction {
         require(phase2Success() == false, "phase2Success() == true");
         require(timer[2].exceeded(), "timer[2].exceeded() == false");
         for (uint256 i = 0; i < bList.length(); i++) {
-            if (bList.get(i).v.length != L) {
+            if (bList.get(i).V.length != L) {
                 bList.get(i).isMalicious = true;
             }
         }
         compensateHonestBidders();
         auctionAborted = true;
-        // TODO remove malicious bidder and continue.
+        // TODO: remove malicious bidder and continue?
     }
 
-    function phase3M1stPriceDecisionMix(
-        Ct[] memory _mixedC,
-        SameDLProof[] memory _pi
+    function phase3ZkAnd(
+        Ct memory _S,
+        Ct01Proof memory _piC3,
+        Ct01Proof memory _piC4
     ) public {
-        if (phase == 2 && phase2Success()) phase = 3;
         require(phase == 3, "phase != 3");
+        require(phase3ZkAndSuccess() == false, "phase3ZkAndSuccess()");
         require(timer[3].exceeded() == false, "timer[3].exceeded() == true");
-        require(_mixedC.length == M + 1, "_mixedC.length != M + 1");
-        require(_pi.length == M + 1, "_pi.length != M + 1");
-        require(binarySearchFailed() == false, "binarySearchFailed() == true");
-
         Bidder storage bidder = bList.find(msg.sender);
-        require(bidder.hasSubmitMixedC == false, "bidder.hasSubmitMix == true");
-        for (uint256 k = 0; k <= M; k++) {
-            Ct memory cc = c[jM].ct;
-            if (k > 0) {
-                cc = cc.subC(zM[k]);
+        require(bidder.hasSubmitZkAnd == false);
+
+        if (roundJ <= L - 2) {
+            if (m1stPrice[roundJ + 1] == 0) {
+                bidder.C = bidder.C.sub(bidder.S);
+                bidder.W = bidder.W.add(bidder.S);
+            } else {
+                bidder.C = bidder.S;
             }
-            require(
-                _pi[k].valid(cc.u, cc.c, _mixedC[k].u, _mixedC[k].c),
-                "SDL proof is not valid"
-            );
         }
 
-        if (mixedC.length == 0) mixedC.set(_mixedC);
-        else mixedC.set(mixedC.add(_mixedC));
+        require(_piC3.valid(_S, pk), "_piC3 not valid.");
+        Ct memory c4 = bidder.C.add(bidder.V[roundJ]).sub(_S.add(_S));
+        require(_piC4.valid(c4, pk), "_piC4 not valid.");
+        bidder.S = _S;
+        WSTotal = WSTotal.add(bidder.W.add(bidder.S));
 
-        bidder.hasSubmitMixedC = true;
-        successCount[3]++;
-        if (phase3Success()) timer[4].start = block.timestamp;
-    }
+        bidder.hasSubmitZkAnd = true;
+        phase3ZkAndCount++;
 
-    function phase3Success() public view returns (bool) {
-        return successCount[3] == bList.length();
-    }
+        bidder.hasSubmitMixedWS = false;
 
-    function phase3Resolve() public {
-        require(auctionAborted == false, "Problem resolved, auction aborted.");
-        require(phase == 3, "phase != 3");
-        require(phase3Success() == false, "phase3Success() == true");
-        require(timer[3].exceeded(), "timer[3].exceeded() == false");
-        if (binarySearchFailed()) {
-            returnAllStake();
-        } else {
-            for (uint256 i = 0; i < bList.length(); i++) {
-                if (bList.get(i).hasSubmitMixedC == false) {
-                    bList.get(i).isMalicious = true;
+        if (phase3ZkAndSuccess()) {
+            phase3MixCount = 0;
+            for (uint256 k = 0; k <= M; k++) {
+                if (WSTotalzM.length <= k) WSTotalzM.push(WSTotal);
+                else WSTotalzM[k] = WSTotal;
+                if (k > 0) {
+                    WSTotalzM[k] = WSTotalzM[k].subC(zM[k]);
                 }
             }
-            compensateHonestBidders();
+            delete WSTotal;
+            timer[3].start = block.timestamp;
         }
+    }
+
+    function phase3ZkAndSuccess() public view returns (bool) {
+        return phase3ZkAndCount == bList.length();
+    }
+
+    function phase3ZkAndResolve() public {
+        require(auctionAborted == false, "Problem resolved, auction aborted.");
+        require(phase == 3, "phase != 3");
+        require(phase3ZkAndSuccess() == false, "phase3Success() == true");
+        require(timer[3].exceeded(), "timer[3].exceeded() == false");
+        for (uint256 i = 0; i < bList.length(); i++) {
+            if (bList.get(i).hasSubmitZkAnd == false) {
+                bList.get(i).isMalicious = true;
+            }
+        }
+        compensateHonestBidders();
         auctionAborted = true;
     }
 
-    function phase4M1stPriceDecisionMatch(
+    function phase3Mix(Ct[] memory _mixedWS, SameDLProof[] memory _pi) public {
+        require(phase == 3, "phase != 3");
+        require(phase3ZkAndSuccess(), "phase3ZkAndSuccess()");
+        require(phase3MixSuccess() == false, "phase3MixSuccess()");
+        require(timer[3].exceeded() == false, "timer[3].exceeded()");
+        Bidder storage bidder = bList.find(msg.sender);
+        require(bidder.hasSubmitMixedWS == false, "bidder.hasSubmitMixedWS");
+
+        require(_mixedWS.length == M + 1, "_mixedWS.length != M + 1");
+        require(_pi.length == M + 1, "_pi.length != M + 1");
+
+        for (uint256 k = 0; k <= M; k++) {
+            require(
+                _pi[k].valid(
+                    WSTotalzM[k].u,
+                    WSTotalzM[k].c,
+                    _mixedWS[k].u,
+                    _mixedWS[k].c
+                ),
+                "_pi[k]"
+            );
+        }
+
+        if (mixedWS.length == 0) mixedWS.set(_mixedWS);
+        else mixedWS.set(mixedWS.add(_mixedWS));
+
+        bidder.hasSubmitMixedWS = true;
+        phase3MixCount++;
+
+        bidder.hasDecMixedWS = false;
+
+        if (phase3MixSuccess()) {
+            phase3MatchCount = 0;
+            timer[3].start = block.timestamp;
+        }
+    }
+
+    function phase3MixSuccess() public view returns (bool) {
+        return phase3MixCount == bList.length();
+    }
+
+    function phase3MixResolve() public {
+        require(auctionAborted == false, "Problem resolved, auction aborted.");
+        require(phase == 3, "phase != 3");
+        require(phase3MixSuccess() == false, "phase3MixSuccess()");
+        require(timer[3].exceeded(), "timer[3].exceeded()");
+        for (uint256 i = 0; i < bList.length(); i++) {
+            if (bList.get(i).hasSubmitMixedWS == false) {
+                bList.get(i).isMalicious = true;
+            }
+        }
+        compensateHonestBidders();
+        auctionAborted = true;
+    }
+
+    function phase3Match(
         ECPoint[] memory _ux,
         SameDLProof[] memory _pi
     ) public {
-        if (phase == 3 && phase3Success()) phase = 4;
-        require(phase == 4, "phase != 4");
-        require(timer[4].exceeded() == false, "timer[4].exceeded() == true");
+        require(phase == 3, "phase != 3");
+        require(phase3MixSuccess(), "phase3MixSuccess()");
+        require(phase3MatchSuccess() == false, "phase3MatchSuccess()");
+        require(timer[3].exceeded() == false, "timer[3].exceeded()");
+        Bidder storage bidder = bList.find(msg.sender);
+        require(bidder.hasDecMixedWS == false, "bidder.hasDecMixedC");
+
         require(_ux.length == M + 1, "_ux.length != M + 1");
         require(_pi.length == M + 1, "_pi.length != M + 1");
 
-        Bidder storage bidder = bList.find(msg.sender);
-        require(bidder.hasDecMixedC == false, "bidder has decrypt bidCA.");
         for (uint256 k = 0; k <= M; k++) {
-            mixedC[k] = mixedC[k].decrypt(bidder, _ux[k], _pi[k]);
+            mixedWS[k] = mixedWS[k].decrypt(bidder, _ux[k], _pi[k]);
         }
 
-        bidder.hasDecMixedC = true;
-        successCount[4]++;
-        if (successCount[4] == bList.length()) {
-            if (phase4Success()) {
-                m1stPrice = c[jM].price;
-                timer[5].start = block.timestamp;
-            } else {
-                if (binarySearchL != c.length - 1) {
-                    bool found = false;
-                    for (uint256 k = 0; k <= M; k++) {
-                        if (mixedC[k].c.isIdentityElement()) found = true;
-                    }
-                    if (found) binarySearchR = jM;
-                    else binarySearchL = jM;
-                    jM = (binarySearchL + binarySearchR) / 2;
+        bidder.hasDecMixedWS = true;
+        phase3MatchCount++;
 
-                    phase = 3;
-                    successCount[3] = 0;
-                    successCount[4] = 0;
-                    timer[3].start = block.timestamp;
-                    for (uint256 i = 0; i < bList.length(); i++) {
-                        bList.get(i).hasSubmitMixedC = false;
-                        bList.get(i).hasDecMixedC = false;
-                    }
-                    for (uint256 k = 0; k <= M; k++) {
-                        delete mixedC[k];
-                    }
+        if (roundJ > 0) {
+            bidder.hasSubmitZkAnd = false;
+        }
+
+        if (phase3MatchSuccess()) {
+            m1stPrice[roundJ] = 1;
+            for (uint256 k = 0; k <= M; k++) {
+                if (mixedWS[k].c.isIdentityElement()) {
+                    m1stPrice[roundJ] = 0;
+                    break;
                 }
+            }
+            if (roundJ > 0) {
+                phase3ZkAndCount = 0;
+                for (uint256 k = 0; k <= M; k++) {
+                    delete mixedWS[k];
+                }
+                roundJ--;
+                timer[3].start = block.timestamp;
+            } else {
+                phase = 4;
+                timer[4].start = block.timestamp;
             }
         }
     }
 
-    function phase4Success() public view returns (bool) {
-        return
-            binarySearchL + 1 == binarySearchR &&
-            successCount[4] == bList.length() &&
-            binarySearchFailed() == false;
+    function phase3MatchSuccess() public view returns (bool) {
+        return phase3MatchCount == bList.length();
     }
 
-    function binarySearchFailed() public view returns (bool) {
-        return
-            binarySearchL == c.length - 1 && successCount[4] == bList.length();
+    function phase3MatchResolve() public {
+        require(auctionAborted == false, "Problem resolved, auction aborted.");
+        require(phase == 3, "phase != 3");
+        require(phase3MatchSuccess() == false, "phase3MatchSuccess() == true");
+        require(timer[4].exceeded(), "timer[4].exceeded() == false");
+        for (uint256 i = 0; i < bList.length(); i++) {
+            if (bList.get(i).hasDecMixedWS == false) {
+                bList.get(i).isMalicious = true;
+            }
+        }
+        compensateHonestBidders();
+        auctionAborted = true;
+    }
+
+    function phase4WinnerDecision(CtMProof memory _piM) public {
+        require(phase == 4, "phase != 4");
+        require(timer[4].exceeded() == false, "timer[4].exceeded() == true");
+        Bidder storage bidder = bList.find(msg.sender);
+        require(bidder.win == false, "Bidder has already declare win.");
+        if (m1stPrice[roundJ + 1] == 0) {
+            bidder.W = bidder.W.add(bidder.S);
+        }
+        require(_piM.valid(bidder.W, pk, zM[1]), "CtMProof not valid.");
+        bidder.win = true;
+        successCount[4]++;
+    }
+
+    function phase4Success() public view returns (bool) {
+        return successCount[4] == M;
     }
 
     function phase4Resolve() public {
@@ -300,90 +374,16 @@ contract Auction {
         require(phase == 4, "phase != 4");
         require(phase4Success() == false, "phase4Success() == true");
         require(timer[4].exceeded(), "timer[4].exceeded() == false");
-        if (binarySearchFailed()) {
-            returnAllStake();
-        } else {
-            for (uint256 i = 0; i < bList.length(); i++) {
-                if (bList.get(i).hasDecMixedC == false) {
-                    bList.get(i).isMalicious = true;
-                }
-            }
-            compensateHonestBidders();
-        }
-        auctionAborted = true;
-    }
-
-    function phase5WinnerDecision(CtMProof memory _piM) public {
-        if (phase == 4 && phase4Success()) phase = 5;
-        require(phase == 5, "phase != 5");
-        require(timer[5].exceeded() == false, "timer[5].exceeded() == true");
-        Bidder storage bidder = bList.find(msg.sender);
-        require(bidder.win == false, "Bidder has already declare win.");
-        Ct memory v_sum;
-        for (uint256 j = 0; j < L; j++) {
-            if (bidder.v[j].price > m1stPrice) {
-                v_sum = v_sum.add(bidder.v[j].ct);
-            }
-        }
-
-        require(_piM.valid(v_sum, pk, zM[1]), "CtMProof not valid.");
-        bidder.win = true;
-        successCount[5]++;
-        if (phase5Success()) timer[6].start = block.timestamp;
-    }
-
-    function phase5Success() public view returns (bool) {
-        return successCount[5] == M;
-    }
-
-    function phase5Resolve() public {
-        require(auctionAborted == false, "Problem resolved, auction aborted.");
-        require(phase == 5, "phase != 5");
-        require(phase5Success() == false, "phase5Success() == true");
-        require(timer[5].exceeded(), "timer[5].exceeded() == false");
-        require(successCount[5] == 0, "There are still some winners.");
+        require(successCount[4] == 0, "There are still some winners.");
         returnAllStake();
         auctionAborted = true;
     }
 
-    function phase6Payment() public payable {
-        if (phase == 5 && phase5Success()) phase = 6;
-        require(phase == 6, "phase != 6");
-        require(timer[6].exceeded() == false, "timer[6].exceeded() == true");
-        Bidder storage bidder = bList.find(msg.sender);
-        require(bidder.win, "Only winner needs to pay.");
-        require(bidder.payed == false, "Only need to pay once.");
-        payable(sellerAddr).transfer(msg.value);
-        bidder.payed = true;
-        successCount[6]++;
-        if (phase6Success()) returnAllStake();
-    }
-
-    function phase6Success() public view returns (bool) {
-        return phase == 6 && successCount[6] == successCount[5];
-    }
-
-    function phase6Resolve() public {
-        require(auctionAborted == false, "Problem resolved, auction aborted.");
-        require(phase == 6, "phase != 6");
-        require(phase6Success() == false, "phase6Success() == true");
-        require(timer[6].exceeded(), "timer[6].exceeded() == false");
-        for (uint256 i = 0; i < bList.length(); i++) {
-            if (bList.get(i).win && bList.get(i).payed == false) {
-                bList.get(i).isMalicious = true;
-            }
-        }
-        if (bList.isMalicious()) compensateHonestBidders();
-        else returnAllStake();
-        auctionAborted = true;
-    }
-
-    function getStake() public view returns (uint256[] memory) {
-        uint256[] memory result = new uint256[](bList.length());
+    function getStake() public view returns (uint256[] memory result) {
+        result = new uint256[](bList.length());
         for (uint256 i = 0; i < bList.length(); i++) {
             result[i] = bList.get(i).stake;
         }
-        return result;
     }
 
     function returnAllStake() internal {

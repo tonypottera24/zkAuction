@@ -5,7 +5,6 @@ import {UIntLib} from "./UIntLib.sol";
 import {ECPoint, ECPointLib} from "./ECPointLib.sol";
 import {Bidder, BidderList, BidderListLib} from "./BidderListLib.sol";
 import {Ct, CtLib} from "./CtLib.sol";
-import {BiddingVectorItem, BiddingVectorItemLib} from "./BiddingVectorItemLib.sol";
 
 struct Ct01Proof {
     ECPoint aa0;
@@ -21,7 +20,6 @@ struct Ct01Proof {
 library Ct01ProofLib {
     using UIntLib for uint256;
     using ECPointLib for ECPoint;
-    using BiddingVectorItemLib for BiddingVectorItem;
 
     function valid(
         Ct01Proof memory pi,
@@ -72,11 +70,11 @@ library Ct01ProofLib {
 
     function valid(
         Ct01Proof[] memory pi,
-        BiddingVectorItem[] memory v,
+        Ct[] memory ct,
         ECPoint memory y
     ) internal view returns (bool) {
         for (uint256 i = 0; i < pi.length; i++) {
-            if (valid(pi[i], v[i].ct, y) == false) return false;
+            if (valid(pi[i], ct[i], y) == false) return false;
         }
         return true;
     }
