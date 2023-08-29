@@ -3,16 +3,19 @@ pragma solidity >=0.8.0 <0.9.0;
 
 import {ECPoint} from "./ECPointLib.sol";
 import {Ct, CtLib} from "./CtLib.sol";
-import {BiddingVectorItem, BiddingVectorItemLib} from "./BiddingVectorItemLib.sol";
 
 struct Bidder {
     address addr;
     uint256 stake;
     bool isMalicious;
     ECPoint pk;
-    BiddingVectorItem[] v;
-    bool hasSubmitMixedC;
-    bool hasDecMixedC;
+    Ct[] V;
+    Ct S;
+    Ct C;
+    Ct W;
+    bool hasSubmitZkAnd;
+    bool hasSubmitMixedWS;
+    bool hasDecMixedWS;
     bool win;
     bool payed;
 }
@@ -40,19 +43,17 @@ library BidderListLib {
         bidder.pk = pk;
     }
 
-    function get(BidderList storage bList, uint256 i)
-        internal
-        view
-        returns (Bidder storage)
-    {
+    function get(
+        BidderList storage bList,
+        uint256 i
+    ) internal view returns (Bidder storage) {
         return bList.list[i];
     }
 
-    function find(BidderList storage bList, address addr)
-        internal
-        view
-        returns (Bidder storage)
-    {
+    function find(
+        BidderList storage bList,
+        address addr
+    ) internal view returns (Bidder storage) {
         uint256 i = bList.map[addr];
         if (i == 0 && get(bList, i).addr != addr) revert("Bidder not found.");
         return get(bList, i);
@@ -62,11 +63,9 @@ library BidderListLib {
         return bList.list.length;
     }
 
-    function isMalicious(BidderList storage bList)
-        internal
-        view
-        returns (bool)
-    {
+    function isMalicious(
+        BidderList storage bList
+    ) internal view returns (bool) {
         for (uint256 i = 0; i < length(bList); i++) {
             if (get(bList, i).isMalicious) return true;
         }
