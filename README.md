@@ -1,9 +1,6 @@
 # Smart Contract based M+1st-Price Sealed-bid Auction
 
-An auction is commonly used to sell limited resources in modern society. In a second-price (sealed-bid) auction, a bidder with the highest bid wins and pays the second-highest price for the goods. Each bidder can only bid once and cannot learn other bidders' bids. A second-price auction, where the bid price reflects the bidder's idea of value, won the Nobel Prize. Google Ads used a second-price auction but migrated to an English auction because it is not easy to achieve public verifiability on the second price. A second-price auction can be generalized to a M+1st-price auction that sells M goods. The highest M winners pay the M+1st-price. In this research, we build a publicly verifiable auction that has no trusted manager.
-
-## Features
-
+An auction is commonly used to sell limited resources in modern society. In a second-price (sealed-bid) auction, a bidder with the highest bid wins and pays the second-highest price for the goods. Each bidder can only bid once and cannot learn other bidders' bids. A second-price auction, where the bid price reflects the bidder's idea of value, won the Nobel Prize. Google Ads used a second-price auction but migrated to an English auction because it is not easy to achieve public verifiability on the second price. A second-price auction can be generalized to a M+1st-price auction that sells M goods. The highest M winners pay the M+1st-price.
 There are some required properties for a M+1st-price auction.
 
 * Correctness and Public Verifiability: Correctness means the auction protocol can find M winners and the M+1st-price. This result should be publicly verifiable.
@@ -12,7 +9,7 @@ There are some required properties for a M+1st-price auction.
 
 * M+1st-Bidder's Anonymity: In a M+1st-price auction, the identity of the bidder who bids the M+1st-price should be kept a secret.
 
-We proposed three protocols. All of them fulfill the required properties and provide additional features.
+We proposed three Smart Contract based auction protocols. All of them fulfill the required properties and provide additional features without a trusted manager.
 
 ### Auction Protocol with Exponential Bid Upper Bound (2023)
 
@@ -52,9 +49,9 @@ The conference version of this protocol is the same as the `DSC2021` branch. Ple
 ### Dependencies
 
 * `python3`
-* We recommend using a virtual execution environment such as `python3-venv`
-* Ethereum Blockchain simulator [ganache-cli](https://github.com/trufflesuite/ganache) (tested)
-* Solidity compiler [py-solc-x](https://pypi.org/project/py-solc-x/) (tested)
+* A virtual execution environment such as `python3-venv` (tested)
+* An Ethereum Blockchain simulator such as [ganache-cli](https://github.com/trufflesuite/ganache) (tested)
+* A Solidity compiler such as [py-solc-x](https://pypi.org/project/py-solc-x/) (tested)
 
 ### Download the repository
 
