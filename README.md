@@ -1,6 +1,6 @@
 # Smart Contract based M+1st-Price Sealed-bid Auction
 
-An auction is commonly used to sell limited resources in modern society. In a second-price (sealed-bid) auction, a bidder with the highest bid wins and pays the second-highest price for the goods. Each bidder can only bid once and cannot learn other bidders' bids. A second-price auction, where the bid price reflects the bidder's idea of value, won the Nobel Prize. Google Ads used a second-price auction but migrated to an English auction because it is not easy to achieve public verifiability on the second price. A second-price auction can be generalized to a M+1st-price auction that sells M goods. The highest M winners pay the M+1st-price.
+An auction is commonly used to sell limited resources. In the Blockchain related fields, an auction can be applied to NFT, Proof of Stake (PoS), Cross-Chain Communication (CCC) and Decentralized EXchange (DEX). A second-price auction, where the bid price reflects the bidder's idea of value, won the Nobel Prize. In a second-price (sealed-bid) auction, a bidder with the highest bid wins and pays the second-highest price for the goods. Each bidder can only bid once and cannot learn other bidders' bids. Google Ads used a second-price auction but migrated to an English auction because it is not easy to achieve public verifiability on the second price. A second-price auction can be generalized to a M+1st-price auction that sells M goods. The highest M winners pay the M+1st-price.
 There are some required properties for a M+1st-price auction.
 
 * Correctness and Public Verifiability: Correctness means the auction protocol can find M winners and the M+1st-price. This result should be publicly verifiable.
@@ -18,7 +18,7 @@ A bit-slice bidding vector V is necessary to compare each bidder's bids secretly
 
 > Po-Chu Hsu and Atsuko Miyaji. ``Blockchain based M+1st-Price Auction with Exponential Bid Upper Bound''. In IEEE Access, pages 1–17, 2023
 
-The conference version of this protocol can be found in the `SciSec2022` branch. Please read the following [conference paper](https://link.springer.com/chapter/10.1007/978-3-031-17551-0_8) for more details.
+The conference version can be found in the `SciSec2022` branch. Please read the following [conference paper](https://link.springer.com/chapter/10.1007/978-3-031-17551-0_8) for more details.
 
 > Po-Chu Hsu and Atsuko Miyaji. ``Scalable M+1st-Price Auction with Infinite Bidding Price''. In International Conference on Science of Cyber Security (SciSec’22), LNCS 13580, Springer-Verlag, pages 121–136, 2022
 
@@ -39,7 +39,7 @@ To our best knowledge, this is the first secure M+1st-price auction protocol tha
 
 > Po-Chu Hsu and Atsuko Miyaji. ``Publicly Verifiable M+1st-Price Auction Fit for IoT with Minimum Storage''. In Security and Communication Networks, pages 1–10, 2021
 
-The conference version of this protocol is the same as the `DSC2021` branch. Please read the following [conference paper](https://ieeexplore.ieee.org/abstract/document/9346242) for more details.
+The conference version is the same as the `DSC2021` branch. Please read the following [conference paper](https://ieeexplore.ieee.org/abstract/document/9346242) for more details.
 
 > Po-Chu Hsu and Atsuko Miyaji. ``Verifiable M+1st-Price Auction without Manager''. In Conference on Dependable and Secure Computing (DSC’21), IEEE, pages 1–8, 2021
 
