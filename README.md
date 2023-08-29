@@ -1,13 +1,18 @@
 # Smart Contract based M+1st-Price Sealed-bid Auction
 
-An auction is commonly used to sell limited resources. In the Blockchain related fields, an auction can be applied to NFT, Proof of Stake (PoS), Cross-Chain Communication (CCC) and Decentralized EXchange (DEX). A second-price auction, where the bid price reflects the bidder's idea of value, won the Nobel Prize. In a second-price (sealed-bid) auction, a bidder with the highest bid wins and pays the second-highest price for the goods. Each bidder can only bid once and cannot learn other bidders' bids. Google Ads used a second-price auction but migrated to an English auction because it is not easy to achieve public verifiability on the second price. A second-price auction can be generalized to a M+1st-price auction that sells M goods. The highest M winners pay the M+1st-price.
-There are some required properties for a M+1st-price auction.
+In NFT, PoS, Cross-Chain Communication and DEX, a Vickrey auction is proven (the prover won a Nobel prize) to increase the seller's income and the bidder pays their true valuation. The bidder with the highest bid wins and pays the second-highest price for the goods.
+Google Ads used a Vickrey auction but migrated to an English auction because it is not easy to achieve public verifiability on the second price.
+A Vickrey auction can be generalized to a M+1st-price auction that sells M goods. The highest M winners pay the M+1st-price.
 
-* Correctness and Public Verifiability: Correctness means the auction protocol can find M winners and the M+1st-price. This result should be publicly verifiable.
+### Required Properties
 
-* Bid Secrecy: A M+1st-price auction is a sealed-bid auction. All bids are sealed and kept secret.
-
-* M+1st-Bidder's Anonymity: In a M+1st-price auction, the identity of the bidder who bids the M+1st-price should be kept a secret.
+* **Correctness**: The protocol can find exactly M winners and the M+1st price.
+* **Public Verifiability**: The result can be publicly verifiable.
+* **Bid Secrecy**: All bidder's bids should be kept as a secret.
+* **M+1st-Bidder's Anonymity**: The identity of the bidder who bids the M+1st-price should be kept a secret.
+* **No Trusted Manager**: A trusted manager is not necessary in our protocol.
+* **Bid Binding**: Each bidder cannot change their bid after submitting it to the Smart Contract.
+* **Financial Fairness**: The malicious (absent) bidder's stake will be used to compensate honest bidders.
 
 We proposed three Smart Contract based auction protocols. All of them fulfill the required properties and provide additional features without a trusted manager.
 
