@@ -5,7 +5,7 @@ There are some required properties for a M+1st-price auction.
 
 * Correctness and Public Verifiability: Correctness means the auction protocol can find M winners and the M+1st-price. This result should be publicly verifiable.
 
-* Bid Secrecy: M+1st-price auction is a sealed-bid auction. All bids are sealed and kept secret.
+* Bid Secrecy: A M+1st-price auction is a sealed-bid auction. All bids are sealed and kept secret.
 
 * M+1st-Bidder's Anonymity: In a M+1st-price auction, the identity of the bidder who bids the M+1st-price should be kept a secret.
 
@@ -13,7 +13,7 @@ We proposed three Smart Contract based auction protocols. All of them fulfill th
 
 ### Auction Protocol with Exponential Bid Upper Bound (2023)
 
-In the `IEEE-Access` branch, we focus on extend the bid upper bound. The time complexity of this protocol is O(M log P) per bidder.
+In the `IEEE-Access` and the `master` branch, we focus on extending the bid upper bound. The time complexity of this protocol is O(M log P) per bidder.
 A bit-slice bidding vector V is necessary to compare each bidder's bids secretly without a trusted manager. The upper bound of a bidder's bid is bounded by the length of the bidding vector |V|. In this protocol, we use a base-2 binary format to encode the bidding vector. To our best knowledge, this is the first secure M+1st-price auction protocol that can each an exponential level bid upper bound 2^|V| without a trusted manager, somewhat homomorphic encryption (SHE) and fully homomorphic encryption (FHE). Please read the following [journal paper](https://ieeexplore.ieee.org/abstract/document/10225494) for more details.
 
 > Po-Chu Hsu and Atsuko Miyaji. ``Blockchain based M+1st-Price Auction with Exponential Bid Upper Bound''. In IEEE Access, pages 1–17, 2023
@@ -73,7 +73,7 @@ pip install -r requirements.txt
 
 ### Execute the program
 
-1. Start a Blockchain simulator such as [ganache-cli](https://github.com/trufflesuite/ganache). An example setup is as followings.
+1. Start a Blockchain simulator such as [ganache-cli](https://github.com/trufflesuite/ganache). An example setup is as follows.
     ```
     ganache-cli --miner.defaultGasPrice 1 --miner.blockGasLimit 0xfffffffffff --miner.callGasLimit 0xfffffffffff --chain.allowUnlimitedContractSize --logging.debug -a 1000 --port 8546
     ```
@@ -93,7 +93,7 @@ usage: main.py [-h] [--port PORT] -M M -B BIDDER -L L
 
 ## Contributions
 
-If you have any questions, please open an issue or send a mail to the following address.
+If you have any questions or want to learn more about this research, please open an issue or send a mail to the following address.
 
 * Po-Chu Hsu: tonypottera[at]gmail.com
 
