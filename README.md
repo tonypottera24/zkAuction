@@ -2,9 +2,9 @@
 
 In NFT, PoS, Cross-Chain Communication and DEX, a Vickrey auction is proven (the prover won a Nobel prize) to increase the seller's income and the bidder pays their true valuation. The bidder with the highest bid wins and pays the second-highest price for the goods.
 Google Ads used a Vickrey auction but migrated to an English auction because it is not easy to achieve public verifiability on the second price.
-A Vickrey auction can be generalized to a M+1st-price auction that sells M goods. The highest M winners pay the M+1st-price.
+A Vickrey auction can be generalized to an M+1st-price auction that sells M goods. The highest M winners pay the M+1st-price.
 
-### Required Properties
+### Required Properties of a Secure (Vickrey or M+1st-price) Sealed-bid Auction
 
 * **Correctness**: The protocol can find exactly M winners and the M+1st price.
 * **Public Verifiability**: The result can be publicly verifiable.
@@ -19,7 +19,7 @@ We proposed three Smart Contract based auction protocols. All of them fulfill th
 ### Auction Protocol with Exponential Bid Upper Bound (2023)
 
 In the `IEEE-Access` and the `master` branch, we focus on extending the bid upper bound. The time complexity of this protocol is O(M log P) per bidder.
-A bit-slice bidding vector V is necessary to compare each bidder's bids secretly without a trusted manager. The upper bound of a bidder's bid is bounded by the length of the bidding vector |V|. In this protocol, we use a base-2 binary format to encode the bidding vector. To our best knowledge, this is the first secure M+1st-price auction protocol that can each an exponential level bid upper bound 2^|V| without a trusted manager, somewhat homomorphic encryption (SHE) and fully homomorphic encryption (FHE). Please read the following [journal paper](https://ieeexplore.ieee.org/abstract/document/10225494) for more details.
+A bit-slice bidding vector V is necessary to compare each bidder's bids secretly without a trusted manager. The upper bound of a bidder's bid is bounded by the length of the bidding vector |V|. In this protocol, we use a base-2 binary format to encode the bidding vector. To our best knowledge, this is the first secure M+1st-price auction protocol that can reach an exponential level bid upper bound 2^|V| without a trusted manager, somewhat homomorphic encryption (SHE) and fully homomorphic encryption (FHE). Please read the following [journal paper](https://ieeexplore.ieee.org/abstract/document/10225494) for more details.
 
 > Po-Chu Hsu and Atsuko Miyaji. ``Blockchain based M+1st-Price Auction with Exponential Bid Upper Bound''. In IEEE Access, vol. 11, pages 91184-91195, 2023
 
@@ -49,24 +49,29 @@ The conference version is the same as the `DSC2021` branch. Please read the foll
 > Po-Chu Hsu and Atsuko Miyaji. ``Verifiable M+1st-Price Auction without Manager''. In Conference on Dependable and Secure Computing (DSC’21), IEEE, pages 1–8, 2021
 
 
-## Getting Started
+## Tutorial
 
-### Dependencies
+> In the tutorial, we demonstrate how to deploy the Smart Contract to an Ethereum simulator [ganache-cli](https://github.com/trufflesuite/ganache) and use our [Python Web3 Client](https://github.com/tonypottera24/m-1st_auction_sol) to benchmark the gas usage.
 
-* `python3`
-* A virtual execution environment such as `python3-venv` (tested)
-* An Ethereum Blockchain simulator such as [ganache-cli](https://github.com/trufflesuite/ganache) (tested)
-* A Solidity compiler such as [py-solc-x](https://pypi.org/project/py-solc-x/) (tested)
+> This tutorial is tested on a Ubuntu 22.04 (LTS) server.
 
-### Download the repository
+### Step 1. Download the repository
 
 The [Python Web3 Client](https://github.com/tonypottera24/m-1st_auction_sol) is designed to work with our [Solidity Smart Contract](https://github.com/tonypottera24/m-1st_auction_sol).
 
 ```
-git clone git@github.com:tonypottera24/m-1st_auction_py.git
-git clone git@github.com:tonypottera24/m-1st_auction_sol.git
+git clone https://github.com/tonypottera24/m-1st_auction_py.git
+git clone https://github.com/tonypottera24/m-1st_auction_sol.git
 cd m-1st_auction_py
 ```
+
+### Step 2. Dependencies
+
+* `python3`
+* A virtual execution environment such as `python3-venv` (tested)
+* A Solidity compiler such as [py-solc-x](https://pypi.org/project/py-solc-x/) (tested)
+
+
 
 ### Install python virtual environment
 
