@@ -162,13 +162,13 @@ Please follow the instructions on the official website [ganache-cli](https://git
     ```
 3. Start the `ganache-cli`.
     ```
-    ganache-cli --miner.defaultGasPrice 1 --miner.blockGasLimit 0xfffffffffff --miner.callGasLimit 0xfffffffffff --logging.debug -a 1000
+    ganache-cli --miner.defaultGasPrice 1 --miner.blockGasLimit 0xfffffffffff --miner.callGasLimit 0xfffffffffff -a 1000
     ```
     * `--miner.defaultGasPrice` can set the gas price.
     * `--miner.blockGasLimit` can increase the gas limit of a block.
     * `--miner.callGasLimit` can increase the gas limit of a function call.
-    * `--logging.debug` shows all debug messages.
-    * `-a` can set the number of accounts.
+    * `-a` can set the number of accounts simulated.
+    * `--logging.debug` shows all debug messages (optional)
 
 ### Step 5. Start benchmark
 
