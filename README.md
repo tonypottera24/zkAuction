@@ -49,60 +49,7 @@ The conference version is the same as the `DSC2021` branch. Please read the foll
 > Po-Chu Hsu and Atsuko Miyaji. ``Verifiable M+1st-Price Auction without Manager''. In Conference on Dependable and Secure Computing (DSC’21), IEEE, pages 1–8, 2021
 
 
-## Tutorial
-
-> In the tutorial, we demonstrate how to deploy the auction Smart Contract to an Ethereum simulator [ganache-cli](https://github.com/trufflesuite/ganache) and use our [Python Web3 Client](https://github.com/tonypottera24/m-1st_auction_sol) to benchmark the gas usage.
-
-> This tutorial is tested on a Ubuntu 22.04 (LTS) server.
-
-### Step 1. Download the repository
-
-1. The auction Smart Contract.
-```
-git clone https://github.com/tonypottera24/m-1st_auction_sol.git
-```
-2. The [Python Web3 Client](https://github.com/tonypottera24/m-1st_auction_sol) we designed to benchmark the Smart Contract.
-```
-git clone https://github.com/tonypottera24/m-1st_auction_py.git
-```
-
-### Step 2. Install and activate Python virtual environment (Optional)
-
-> This step can make sure you are using the python packages we tested.
-
-1. Install a virtual environment such as `python3-venv`.
-```
-sudo apt install python3-venv
-```
-2. Create and activate the virtual environment.
-```
-cd m-1st_auction_py
-python3 -m venv venv
-source venv/bin/activate
-```
-3. Install required packages to build Python packages.
-```
-sudo apt install build-essential python3-dev libgmp-dev
-```
-4. Install required python packages.
-```
-pip install -r requirements.txt
-```
-
-### Install a Solidity compiler
-
-* A Solidity compiler such as [py-solc-x](https://pypi.org/project/py-solc-x/)
-
-### Execute the program
-
-1. Start a Blockchain simulator such as [ganache-cli](https://github.com/trufflesuite/ganache). An example setup is as follows.
-    ```
-    ganache-cli --miner.defaultGasPrice 1 --miner.blockGasLimit 0xfffffffffff --miner.callGasLimit 0xfffffffffff --chain.allowUnlimitedContractSize --logging.debug -a 1000
-    ```
-1. Install a Solidity compiler such as [py-solc-x](https://pypi.org/project/py-solc-x/). You need to follow the instructions on their website to download the binary.
-1. The codes in `contract.py` will use the Solidity compiler downloaded by `py-solc-x` to compile the Smart Contract and deploy the compiled contract to the Ganache simulator.
-
-### Usage
+## Usage
 
 ```
 usage: main.py [-h] [--port PORT] -M M -B BIDDER -L L
@@ -112,6 +59,95 @@ usage: main.py [-h] [--port PORT] -M M -B BIDDER -L L
 * `-M`: the number of goods the seller wants to sell.
 * `-B`: the number of bidders you want to simulate.
 * `-L`: the length of the bidding price.
+
+
+## Tutorial
+
+> In the tutorial, we demonstrate how to deploy the auction Smart Contract to an Ethereum simulator [ganache-cli](https://github.com/trufflesuite/ganache) and use our [Python Web3 Client](https://github.com/tonypottera24/m-1st_auction_sol) to benchmark the gas usage.
+> You don't need to read this tutorial if you want to build your own web3 client.
+
+> This tutorial is tested on a Ubuntu 22.04 (LTS) server.
+
+### Step 1. Download the repository
+
+1. The auction Smart Contract.
+    ```
+    git clone https://github.com/tonypottera24/m-1st_auction_sol.git
+    ```
+2. The [Python Web3 Client](https://github.com/tonypottera24/m-1st_auction_sol) we designed to benchmark the Smart Contract.
+    ```
+    git clone https://github.com/tonypottera24/m-1st_auction_py.git
+    ```
+
+### Step 2. Install and activate Python virtual environment (Optional)
+
+> This step can make sure you are using the python packages we tested.
+
+1. Install a virtual environment such as `python3-venv`.
+    ```
+    sudo apt install python3-venv
+    ```
+2. Create and activate the virtual environment.
+    ```
+    cd m-1st_auction_py
+    python3 -m venv venv
+    source venv/bin/activate
+    ```
+3. Install required packages to build Python packages.
+    ```
+    sudo apt install build-essential python3-dev libgmp-dev
+    ```
+4. Install required python packages.
+    ```
+    pip install -r requirements.txt
+    ```
+
+### Step 3. Install a Solidity compiler
+
+> Please follow the instructions on the official website [py-solc-x](https://solcx.readthedocs.io/en/latest/) if the following example doesn't works for you.
+
+1. Enter the Python interpreter
+    ```
+    python
+    ```
+2. Get installable `solc` (Solidity compiler) versions.
+    > The `>>>` part is the command you need to type in the interpreter.
+    ```
+    >>> import solcx
+    >>> solcx.get_installable_solc_versions()
+    [Version('0.8.21'), ...]
+    ```
+3. Install version `0.8.21` (you can install the latest compatible version)
+    ```
+    >>> solcx.install_solc(version="0.8.21")
+    Version('0.8.21')
+    ```
+4. You can use the following command to check the installed compiler version.
+    ```
+    >>> solcx.get_installed_solc_versions()
+    [Version('0.8.21')]
+    ```
+
+### Step 4. Install and start the Ethereum simulator
+
+> In this tutorial, we use [ganache-cli](https://github.com/trufflesuite/ganache) as an example.
+> Please follow the instructions on the official website [ganache-cli](https://github.com/trufflesuite/ganache) if the following example doesn't works for you.
+
+1. Install the `ganache-cli` package.
+    ```
+    apt install npm
+    npm install ganache --global
+    ```
+2. Start the `ganache-cli`.
+    ```
+    ganache-cli --miner.defaultGasPrice 1 --miner.blockGasLimit 0xfffffffffff --miner.callGasLimit 0xfffffffffff --chain.allowUnlimitedContractSize --logging.debug -a 1000
+    ```
+1. Install a Solidity compiler such as [py-solc-x](https://pypi.org/project/py-solc-x/). You need to follow the instructions on their website to download the binary.
+1. The codes in `contract.py` will use the Solidity compiler downloaded by `py-solc-x` to compile the Smart Contract and deploy the compiled contract to the Ganache simulator.
+
+
+### Step 5.
+
 
 ## Contributions
 
