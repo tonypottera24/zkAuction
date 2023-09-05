@@ -57,30 +57,34 @@ The conference version is the same as the `DSC2021` branch. Please read the foll
 
 ### Step 1. Download the repository
 
-* The auction Smart Contract.
+1. The auction Smart Contract.
 ```
 git clone https://github.com/tonypottera24/m-1st_auction_sol.git
 ```
-* The [Python Web3 Client](https://github.com/tonypottera24/m-1st_auction_sol) we designed to benchmark the Smart Contract.
+2. The [Python Web3 Client](https://github.com/tonypottera24/m-1st_auction_sol) we designed to benchmark the Smart Contract.
 ```
 git clone https://github.com/tonypottera24/m-1st_auction_py.git
 ```
 
-### Step 2. Install and activate Python virtual environment
+### Step 2. Install and activate Python virtual environment (Optional)
 
 > This step can make sure you are using the python packages we tested.
 
-* Install a virtual environment such as `python3-venv`.
+1. Install a virtual environment such as `python3-venv`.
 ```
-apt install python3 python3-venv
+sudo apt install python3-venv
 ```
-* Create and activate the virtual environment.
+2. Create and activate the virtual environment.
 ```
 cd m-1st_auction_py
 python3 -m venv venv
 source venv/bin/activate
 ```
-* Install required python packages.
+3. Install required packages to build Python packages.
+```
+sudo apt install build-essential python3-dev libgmp-dev
+```
+4. Install required python packages.
 ```
 pip install -r requirements.txt
 ```
