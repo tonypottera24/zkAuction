@@ -33,7 +33,7 @@ The conference version can be found in the `SciSec2022` branch. Please read the 
 In the `TrustCom2021` branch, we focus on optimizing the time complexity. The time complexity of this protocol is O(P) per bidder.
 The time complexity for a trusted manager is usually O(BPM) since the manager needs to compare all B bidder's bids, verify each bidder's bidding vector with length P and find M winning bidders.
 We use zero-knowledge proofs to remove the B factor and we found a greedy strategy to remove the M factor.
-To our best knowledge, this is the first secure M+1st-price auction protocol that can each an optimal time complexity without a trusted manager and Mix and Match protocol. Please read the following [conference paper](https://ieeexplore.ieee.org/abstract/document/9724495/) for more details.
+To our best knowledge, this is the first secure M+1st-price auction protocol that can reach an optimal time complexity without a trusted manager and Mix and Match protocol. Please read the following [conference paper](https://ieeexplore.ieee.org/abstract/document/9724495/) for more details.
 
 > Po-Chu Hsu and Atsuko Miyaji. ``Bidder Scalable M+1st-Price Auction with Public Verifiability''. In International Conference on Trust, Security and Privacy in Comput- ing and Communications (TrustCom’21), IEEE, pages 34–42, 2021
 
@@ -85,7 +85,7 @@ In the tutorial, we demonstrate how to deploy the auction Smart Contract to an E
 
 ### Step 2. Install and activate Python virtual environment (Optional)
 
-This step can make sure you are using the python packages we tested.
+This step can make sure you are using the Python packages we tested.
 
 1. Install a virtual environment such as `python3-venv`.
     ```
@@ -101,14 +101,14 @@ This step can make sure you are using the python packages we tested.
     ```
     sudo apt install build-essential python3-dev libgmp-dev
     ```
-4. Install required python packages.
+4. Install required Python packages.
     ```
     pip install -r requirements.txt
     ```
 
 ### Step 3. Install a Solidity compiler
 
-Please follow the instructions on the official website [py-solc-x](https://solcx.readthedocs.io/en/latest/) if the following example doesn't works for you.
+Please follow the instructions on the official website [py-solc-x](https://solcx.readthedocs.io/en/latest/) if the following example doesn't work for you.
 
 1. Enter the Python interpreter
     ```
@@ -174,7 +174,7 @@ Please follow the instructions on the official website [ganache-cli](https://git
 
 The codes in `contract.py` use the `solc` (Solidity compiler) downloaded by `py-solc-x` to compile the Smart Contract and deploy the compiled binary to the `ganache-cli` (Ethereum simulator).
 
-An example of selling `1` item to `10`` bidders with bid upper bound `2^10 - 1 = 1023` is
+An example of selling `1` item to `10` bidders with a bid upper bound `2^10 - 1 = 1023` is
 ```
 ./main.py -M 1 -B 10 -L 10
 ```
