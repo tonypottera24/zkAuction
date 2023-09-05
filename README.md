@@ -42,15 +42,11 @@ To our best knowledge, this is the first secure M+1st-price auction protocol tha
 In the `DSC2021` branch, we focus on how to use Smart Contracts to replace the trusted manager. The time complexity of this protocol is O(BPM) per bidder.
 To our best knowledge, this is the first secure M+1st-price auction protocol that can fulfill all required properties without a trusted manager. Please read the following [journal paper](https://www.hindawi.com/journals/scn/2021/1615117/) for more details.
 
-```
-Po-Chu Hsu and Atsuko Miyaji. ``Publicly Verifiable M+1st-Price Auction Fit for IoT with Minimum Storage''. In Security and Communication Networks, pages 1–10, 2021
-```
+> Po-Chu Hsu and Atsuko Miyaji. ``Publicly Verifiable M+1st-Price Auction Fit for IoT with Minimum Storage''. In Security and Communication Networks, pages 1–10, 2021
 
 The conference version is the same as the `DSC2021` branch. Please read the following [conference paper](https://ieeexplore.ieee.org/abstract/document/9346242) for more details.
 
-```
-Po-Chu Hsu and Atsuko Miyaji. ``Verifiable M+1st-Price Auction without Manager''. In Conference on Dependable and Secure Computing (DSC’21), IEEE, pages 1–8, 2021
-```
+> Po-Chu Hsu and Atsuko Miyaji. ``Verifiable M+1st-Price Auction without Manager''. In Conference on Dependable and Secure Computing (DSC’21), IEEE, pages 1–8, 2021
 
 
 ## Usage
@@ -62,13 +58,17 @@ usage: main.py [-h] [--port PORT] -M M -B BIDDER -L L
 * `--port`: the port of the Ethereum simulator RPC
 * `-M`: the number of goods the seller wants to sell.
 * `-B`: the number of bidders you want to simulate.
-* `-L`: the length of the bidding price.
+* `-L`: the length of the bidding vector `V`. The bid upper bound is `2^|V| - 1`.
 
+An example of selling `1` item to `10`` bidders with bid upper bound `2^32 - 1 = 4294967295` is
+
+```
+./main.py -M 1 -B 10 -L 32
+```
 
 ## Tutorial
 
 In the tutorial, we demonstrate how to deploy the auction Smart Contract to an Ethereum simulator [ganache-cli](https://github.com/trufflesuite/ganache) and use our [Python Web3 Client](https://github.com/tonypottera24/m-1st_auction_sol) to benchmark the gas usage.
-You don't need to read this tutorial if you want to build your own web3 client.
 
 > This tutorial is tested on a Ubuntu 22.04 (LTS) server.
 
@@ -134,23 +134,50 @@ Please follow the instructions on the official website [py-solc-x](https://solcx
 
 ### Step 4. Install and start the Ethereum simulator
 
-> In this tutorial, we use [ganache-cli](https://github.com/trufflesuite/ganache) as an example.
-> Please follow the instructions on the official website [ganache-cli](https://github.com/trufflesuite/ganache) if the following example doesn't works for you.
+In this tutorial, we use [ganache-cli](https://github.com/trufflesuite/ganache) as an example.
+Please follow the instructions on the official website [ganache-cli](https://github.com/trufflesuite/ganache) if the following example doesn't works for you.
 
-1. Install the `ganache-cli` package.
-    ```
-    apt install npm
-    npm install ganache --global
-    ```
-2. Start the `ganache-cli`.
-    ```
-    ganache-cli --miner.defaultGasPrice 1 --miner.blockGasLimit 0xfffffffffff --miner.callGasLimit 0xfffffffffff --chain.allowUnlimitedContractSize --logging.debug -a 1000
-    ```
-1. Install a Solidity compiler such as [py-solc-x](https://pypi.org/project/py-solc-x/). You need to follow the instructions on their website to download the binary.
-1. The codes in `contract.py` will use the Solidity compiler downloaded by `py-solc-x` to compile the Smart Contract and deploy the compiled contract to the Ganache simulator.
+1. Install nodejs
+    > An [issue](https://github.com/trufflesuite/ganache/issues/4451) said the v12 provided by `apt` isn't supported by `ganache-cli`.
+    > Please follow the instructions on the official website [nodesource](https://github.com/nodesource/distributions/blob/master/README.md#installation-instructions) if the following example doesn't works for you.
 
+    Set the nodejs version you want to install.
+    ```
+    NODE_MAJOR=20
+    ```
+    Install nodesource gpg key.
+    ```
+    sudo mkdir -p /etc/apt/keyrings
+    curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
+    ```
+    Install nodejs
+    ```
+    sudo apt update
+    sudo apt install nodejs
+    ```
+2. Install the `ganache-cli` package.
+    ```
+    npm install -g ganache
+    ```
+3. Start the `ganache-cli`.
+    ```
+    ganache-cli --miner.defaultGasPrice 1 --miner.blockGasLimit 0xfffffffffff --miner.callGasLimit 0xfffffffffff --logging.debug -a 1000
+    ```
+    * `--miner.defaultGasPrice` can set the gas price.
+    * `--miner.blockGasLimit` can increase the gas limit of a block.
+    * `--miner.callGasLimit` can increase the gas limit of a function call.
+    * `--logging.debug` shows all debug messages.
+    * `-a` can set the number of accounts.
 
-### Step 5.
+### Step 5. Start benchmark
+
+The codes in `contract.py` use the `solc` (Solidity compiler) downloaded by `py-solc-x` to compile the Smart Contract and deploy the compiled binary to the `ganache-cli` (Ethereum simulator).
+
+An example of selling `1` item to `10`` bidders with bid upper bound `2^10 - 1 = 1023` is
+```
+./main.py -M 1 -B 10 -L 10
+```
 
 
 ## Contributions
