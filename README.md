@@ -42,11 +42,15 @@ To our best knowledge, this is the first secure M+1st-price auction protocol tha
 In the `DSC2021` branch, we focus on how to use Smart Contracts to replace the trusted manager. The time complexity of this protocol is O(BPM) per bidder.
 To our best knowledge, this is the first secure M+1st-price auction protocol that can fulfill all required properties without a trusted manager. Please read the following [journal paper](https://www.hindawi.com/journals/scn/2021/1615117/) for more details.
 
-> Po-Chu Hsu and Atsuko Miyaji. ``Publicly Verifiable M+1st-Price Auction Fit for IoT with Minimum Storage''. In Security and Communication Networks, pages 1–10, 2021
+```
+Po-Chu Hsu and Atsuko Miyaji. ``Publicly Verifiable M+1st-Price Auction Fit for IoT with Minimum Storage''. In Security and Communication Networks, pages 1–10, 2021
+```
 
 The conference version is the same as the `DSC2021` branch. Please read the following [conference paper](https://ieeexplore.ieee.org/abstract/document/9346242) for more details.
 
-> Po-Chu Hsu and Atsuko Miyaji. ``Verifiable M+1st-Price Auction without Manager''. In Conference on Dependable and Secure Computing (DSC’21), IEEE, pages 1–8, 2021
+```
+Po-Chu Hsu and Atsuko Miyaji. ``Verifiable M+1st-Price Auction without Manager''. In Conference on Dependable and Secure Computing (DSC’21), IEEE, pages 1–8, 2021
+```
 
 
 ## Usage
@@ -63,8 +67,8 @@ usage: main.py [-h] [--port PORT] -M M -B BIDDER -L L
 
 ## Tutorial
 
-> In the tutorial, we demonstrate how to deploy the auction Smart Contract to an Ethereum simulator [ganache-cli](https://github.com/trufflesuite/ganache) and use our [Python Web3 Client](https://github.com/tonypottera24/m-1st_auction_sol) to benchmark the gas usage.
-> You don't need to read this tutorial if you want to build your own web3 client.
+In the tutorial, we demonstrate how to deploy the auction Smart Contract to an Ethereum simulator [ganache-cli](https://github.com/trufflesuite/ganache) and use our [Python Web3 Client](https://github.com/tonypottera24/m-1st_auction_sol) to benchmark the gas usage.
+You don't need to read this tutorial if you want to build your own web3 client.
 
 > This tutorial is tested on a Ubuntu 22.04 (LTS) server.
 
@@ -81,7 +85,7 @@ usage: main.py [-h] [--port PORT] -M M -B BIDDER -L L
 
 ### Step 2. Install and activate Python virtual environment (Optional)
 
-> This step can make sure you are using the python packages we tested.
+This step can make sure you are using the python packages we tested.
 
 1. Install a virtual environment such as `python3-venv`.
     ```
@@ -104,7 +108,7 @@ usage: main.py [-h] [--port PORT] -M M -B BIDDER -L L
 
 ### Step 3. Install a Solidity compiler
 
-> Please follow the instructions on the official website [py-solc-x](https://solcx.readthedocs.io/en/latest/) if the following example doesn't works for you.
+Please follow the instructions on the official website [py-solc-x](https://solcx.readthedocs.io/en/latest/) if the following example doesn't works for you.
 
 1. Enter the Python interpreter
     ```
