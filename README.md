@@ -62,21 +62,23 @@ The [Python Web3 Client](https://github.com/tonypottera24/m-1st_auction_sol) is 
 ```
 git clone https://github.com/tonypottera24/m-1st_auction_py.git
 git clone https://github.com/tonypottera24/m-1st_auction_sol.git
-cd m-1st_auction_py
 ```
 
 ### Step 2. Dependencies
 
-* `python3`
+```
+apt install python3 python3-venv
+```
+
 * A virtual execution environment such as `python3-venv` (tested)
 * A Solidity compiler such as [py-solc-x](https://pypi.org/project/py-solc-x/) (tested)
-
 
 
 ### Install python virtual environment
 
 ```
-python -m venv venv
+cd m-1st_auction_py
+python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
@@ -85,7 +87,7 @@ pip install -r requirements.txt
 
 1. Start a Blockchain simulator such as [ganache-cli](https://github.com/trufflesuite/ganache). An example setup is as follows.
     ```
-    ganache-cli --miner.defaultGasPrice 1 --miner.blockGasLimit 0xfffffffffff --miner.callGasLimit 0xfffffffffff --chain.allowUnlimitedContractSize --logging.debug -a 1000 --port 8546
+    ganache-cli --miner.defaultGasPrice 1 --miner.blockGasLimit 0xfffffffffff --miner.callGasLimit 0xfffffffffff --chain.allowUnlimitedContractSize --logging.debug -a 1000
     ```
 1. Install a Solidity compiler such as [py-solc-x](https://pypi.org/project/py-solc-x/). You need to follow the instructions on their website to download the binary.
 1. The codes in `contract.py` will use the Solidity compiler downloaded by `py-solc-x` to compile the Smart Contract and deploy the compiled contract to the Ganache simulator.
