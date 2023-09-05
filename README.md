@@ -51,37 +51,43 @@ The conference version is the same as the `DSC2021` branch. Please read the foll
 
 ## Tutorial
 
-> In the tutorial, we demonstrate how to deploy the Smart Contract to an Ethereum simulator [ganache-cli](https://github.com/trufflesuite/ganache) and use our [Python Web3 Client](https://github.com/tonypottera24/m-1st_auction_sol) to benchmark the gas usage.
+> In the tutorial, we demonstrate how to deploy the auction Smart Contract to an Ethereum simulator [ganache-cli](https://github.com/trufflesuite/ganache) and use our [Python Web3 Client](https://github.com/tonypottera24/m-1st_auction_sol) to benchmark the gas usage.
 
 > This tutorial is tested on a Ubuntu 22.04 (LTS) server.
 
 ### Step 1. Download the repository
 
-The [Python Web3 Client](https://github.com/tonypottera24/m-1st_auction_sol) is designed to work with our [Solidity Smart Contract](https://github.com/tonypottera24/m-1st_auction_sol).
-
+* The auction Smart Contract.
 ```
-git clone https://github.com/tonypottera24/m-1st_auction_py.git
 git clone https://github.com/tonypottera24/m-1st_auction_sol.git
 ```
+* The [Python Web3 Client](https://github.com/tonypottera24/m-1st_auction_sol) we designed to benchmark the Smart Contract.
+```
+git clone https://github.com/tonypottera24/m-1st_auction_py.git
+```
 
-### Step 2. Dependencies
+### Step 2. Install and activate Python virtual environment
 
+> This step can make sure you are using the python packages we tested.
+
+* Install a virtual environment such as `python3-venv`.
 ```
 apt install python3 python3-venv
 ```
-
-* A virtual execution environment such as `python3-venv` (tested)
-* A Solidity compiler such as [py-solc-x](https://pypi.org/project/py-solc-x/) (tested)
-
-
-### Install python virtual environment
-
+* Create and activate the virtual environment.
 ```
 cd m-1st_auction_py
 python3 -m venv venv
 source venv/bin/activate
+```
+* Install required python packages.
+```
 pip install -r requirements.txt
 ```
+
+### Install a Solidity compiler
+
+* A Solidity compiler such as [py-solc-x](https://pypi.org/project/py-solc-x/)
 
 ### Execute the program
 
