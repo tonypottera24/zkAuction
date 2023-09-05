@@ -68,9 +68,9 @@ An example of selling `1` item to `10`` bidders with bid upper bound `2^32 - 1 =
 
 ## Tutorial
 
-In the tutorial, we demonstrate how to deploy the auction Smart Contract to an Ethereum simulator [ganache-cli](https://github.com/trufflesuite/ganache) and use our [Python Web3 Client](https://github.com/tonypottera24/m-1st_auction_sol) to benchmark the gas usage.
-
 > This tutorial is tested on a Ubuntu 22.04 (LTS) server.
+
+In this tutorial, we demonstrate how to deploy the auction Smart Contract to an Ethereum simulator [ganache-cli](https://github.com/trufflesuite/ganache) and use our [Python Web3 Client](https://github.com/tonypottera24/m-1st_auction_sol) to benchmark the gas usage.
 
 ### Step 1. Download the repository
 
