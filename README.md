@@ -72,6 +72,13 @@ An example of selling `1` item to `10`` bidders with bid upper bound `2^32 - 1 =
 
 In this tutorial, we demonstrate how to deploy the auction Smart Contract to an Ethereum simulator [ganache-cli](https://github.com/trufflesuite/ganache) and use our [Python Web3 Client](https://github.com/tonypottera24/m-1st_auction_sol) to benchmark the gas usage.
 
+This tutorial includes 5 steps.
+* Step 1. Download the repository
+* Step 2. Install and activate Python virtual environment (optional)
+* Step 3. Install a Solidity compiler
+* Step 4. Install and start the Ethereum simulator
+* Step 5. Start benchmark
+
 ### Step 1. Download the repository
 
 1. The auction Smart Contract.
@@ -83,7 +90,7 @@ In this tutorial, we demonstrate how to deploy the auction Smart Contract to an 
     git clone https://github.com/tonypottera24/m-1st_auction_py.git
     ```
 
-### Step 2. Install and activate Python virtual environment (Optional)
+### Step 2. Install and activate Python virtual environment (optional)
 
 This step can make sure you are using the Python packages we tested.
 
