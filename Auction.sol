@@ -104,15 +104,6 @@ contract Auction {
         return bList.length() > M && timer[1].exceeded();
     }
 
-    function phase1Resolve() public {
-        require(auctionAborted == false, "Problem resolved, auction aborted.");
-        require(phase == 1, "phase != 1");
-        require(phase1Success() == false, "phase1Success() == true");
-        require(timer[1].exceeded(), "timer[1].exceeded() == false");
-        returnAllStake();
-        auctionAborted = true;
-    }
-
     function phase2BidderSubmitBid(
         Ct[] memory _V,
         Ct01Proof[] memory _V_01_proof,
@@ -152,21 +143,6 @@ contract Auction {
 
     function phase2Success() public view returns (bool) {
         return successCount[2] == bList.length();
-    }
-
-    function phase2Resolve() public {
-        require(auctionAborted == false, "Problem resolved, auction aborted.");
-        require(phase == 2, "phase != 2");
-        require(phase2Success() == false, "phase2Success() == true");
-        require(timer[2].exceeded(), "timer[2].exceeded() == false");
-        for (uint256 i = 0; i < bList.length(); i++) {
-            if (bList.get(i).V.length != L) {
-                bList.get(i).isMalicious = true;
-            }
-        }
-        compensateHonestBidders();
-        auctionAborted = true;
-        // TODO: remove malicious bidder and continue?
     }
 
     function phase3ZkAnd(
@@ -218,20 +194,6 @@ contract Auction {
         return phase3ZkAndCount == bList.length();
     }
 
-    function phase3ZkAndResolve() public {
-        require(auctionAborted == false, "Problem resolved, auction aborted.");
-        require(phase == 3, "phase != 3");
-        require(phase3ZkAndSuccess() == false, "phase3Success() == true");
-        require(timer[3].exceeded(), "timer[3].exceeded() == false");
-        for (uint256 i = 0; i < bList.length(); i++) {
-            if (bList.get(i).hasSubmitZkAnd == false) {
-                bList.get(i).isMalicious = true;
-            }
-        }
-        compensateHonestBidders();
-        auctionAborted = true;
-    }
-
     function phase3Mix(Ct[] memory _mixedWS, SameDLProof[] memory _pi) public {
         require(phase == 3, "phase != 3");
         require(phase3ZkAndSuccess(), "phase3ZkAndSuccess()");
@@ -271,20 +233,6 @@ contract Auction {
 
     function phase3MixSuccess() public view returns (bool) {
         return phase3MixCount == bList.length();
-    }
-
-    function phase3MixResolve() public {
-        require(auctionAborted == false, "Problem resolved, auction aborted.");
-        require(phase == 3, "phase != 3");
-        require(phase3MixSuccess() == false, "phase3MixSuccess()");
-        require(timer[3].exceeded(), "timer[3].exceeded()");
-        for (uint256 i = 0; i < bList.length(); i++) {
-            if (bList.get(i).hasSubmitMixedWS == false) {
-                bList.get(i).isMalicious = true;
-            }
-        }
-        compensateHonestBidders();
-        auctionAborted = true;
     }
 
     function phase3Match(
@@ -338,20 +286,6 @@ contract Auction {
         return phase3MatchCount == bList.length();
     }
 
-    function phase3MatchResolve() public {
-        require(auctionAborted == false, "Problem resolved, auction aborted.");
-        require(phase == 3, "phase != 3");
-        require(phase3MatchSuccess() == false, "phase3MatchSuccess() == true");
-        require(timer[4].exceeded(), "timer[4].exceeded() == false");
-        for (uint256 i = 0; i < bList.length(); i++) {
-            if (bList.get(i).hasDecMixedWS == false) {
-                bList.get(i).isMalicious = true;
-            }
-        }
-        compensateHonestBidders();
-        auctionAborted = true;
-    }
-
     function phase4WinnerDecision(CtMProof memory _piM) public {
         require(phase == 4, "phase != 4");
         require(timer[4].exceeded() == false, "timer[4].exceeded() == true");
@@ -363,54 +297,74 @@ contract Auction {
         require(_piM.valid(bidder.W, pk, zM[1]), "CtMProof not valid.");
         bidder.win = true;
         successCount[4]++;
+        if (phase4Success()) returnAllStake();
     }
 
     function phase4Success() public view returns (bool) {
         return successCount[4] == M;
     }
 
-    function phase4Resolve() public {
+    function resolveAndReturnStake() public {
         require(auctionAborted == false, "Problem resolved, auction aborted.");
-        require(phase == 4, "phase != 4");
-        require(phase4Success() == false, "phase4Success() == true");
-        require(timer[4].exceeded(), "timer[4].exceeded() == false");
-        require(successCount[4] == 0, "There are still some winners.");
+        require(timer[phase].exceeded(), "timer[].exceeded() == false");
+        if (phase == 1) {
+            require(phase1Success() == false, "phase1Success() == true");
+        } else if (phase == 2) {
+            require(phase2Success() == false, "phase2Success() == true");
+            for (uint256 i = 0; i < bList.length(); i++) {
+                if (bList.get(i).V.length != L) {
+                    bList.get(i).isMalicious = true;
+                }
+            }
+        } else if (phase == 3) {
+            // NOTE: fix this
+            if (phase3MixSuccess() == false) {
+                for (uint256 i = 0; i < bList.length(); i++) {
+                    if (bList.get(i).hasSubmitMixedWS == false) {
+                        bList.get(i).isMalicious = true;
+                    }
+                }
+            } else if (phase3ZkAndSuccess() == false) {
+                for (uint256 i = 0; i < bList.length(); i++) {
+                    if (bList.get(i).hasSubmitZkAnd == false) {
+                        bList.get(i).isMalicious = true;
+                    }
+                }
+            } else if (phase3MatchSuccess() == false) {
+                for (uint256 i = 0; i < bList.length(); i++) {
+                    if (bList.get(i).hasDecMixedWS == false) {
+                        bList.get(i).isMalicious = true;
+                    }
+                }
+            }
+        } else if (phase == 4) {
+            require(phase4Success() == false, "phase4Success() == true");
+            require(successCount[4] == 0, "There are still some winners.");
+        } else {
+            revert("phase out of range");
+        }
         returnAllStake();
         auctionAborted = true;
     }
 
-    function getStake() public view returns (uint256[] memory result) {
-        result = new uint256[](bList.length());
-        for (uint256 i = 0; i < bList.length(); i++) {
-            result[i] = bList.get(i).stake;
-        }
-    }
-
     function returnAllStake() internal {
-        require(bList.isMalicious() == false);
-        for (uint256 i = 0; i < bList.length(); i++) {
-            if (bList.get(i).stake > 0) {
-                payable(bList.get(i).addr).transfer(bList.get(i).stake);
-                bList.get(i).stake = 0;
-            }
-        }
-    }
-
-    function compensateHonestBidders() internal {
-        require(bList.isMalicious(), "Bidders are not malicious.");
-        uint256 d = 0;
+        uint256 compensation = 0;
         uint256 maliciousBidderCount = 0;
         for (uint256 i = 0; i < bList.length(); i++) {
             if (bList.get(i).isMalicious) {
-                d += bList.get(i).stake;
+                compensation += bList.get(i).stake;
                 bList.get(i).stake = 0;
                 maliciousBidderCount++;
             }
         }
-        d /= bList.length() - maliciousBidderCount;
+        compensation /= bList.length() - maliciousBidderCount;
         for (uint256 i = 0; i < bList.length(); i++) {
-            if (bList.get(i).isMalicious == false)
-                payable(bList.get(i).addr).transfer(d);
+            if (bList.get(i).isMalicious == false) {
+                payable(bList.get(i).addr).transfer(
+                    bList.get(i).stake + compensation
+                );
+                bList.get(i).stake = 0;
+            }
         }
     }
 }
