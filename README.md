@@ -51,7 +51,7 @@ The conference version is the same as the `DSC2021` branch. Please read the foll
 
 ## Usage
 
-### Seller config and deploy the Smart Contract
+### Seller: config and deploy the Smart Contract
 ```
 usage: seller.py [-h] [--port PORT] [-i INDEX] [-M M] -L L [-s STAKE] [-t TIMEOUT] [-o OUTPUT]
 
@@ -84,7 +84,7 @@ Example: selling `1` item with bid upper bound `2^8 - 1 = 255`
 ./seller.py -M 1 -L 8
 ```
 
-### Bidder decides a bid and join the auction
+### Bidder: decides a bid and join the auction
 ```
 usage: bidder.py [-h] [--port PORT] -i INDEX [-c CONTRACT] -b BID
 
@@ -110,7 +110,7 @@ Example: one bidder bid `10` and another bidder bid `20`
 ./bidder.py -i 2 -b 20
 ```
 
-### We provide a script to automate the benchmark
+### Benchmark: automated testing script
 ```
 usage: benchmark.py [-h] [--port PORT] [-M M] -B B -L L
 
