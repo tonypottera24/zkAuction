@@ -49,86 +49,6 @@ The conference version is the same as the `DSC2021` branch. Please read the foll
 > Po-Chu Hsu and Atsuko Miyaji. ``Verifiable M+1st-Price Auction without Manager''. In Conference on Dependable and Secure Computing (DSC’21), IEEE, pages 1–8, 2021
 
 
-## Usage
-
-### 1. Seller: configures and deploys the Smart Contract
-```
-usage: seller.py [-h] [--port PORT] [-i INDEX] [-M M] -L L [-s STAKE] [-t TIMEOUT] [-o OUTPUT]
-
-options:
-  -h, --help            show this help message and exit
-  --port PORT           web3 provider port
-  -i INDEX, --index INDEX
-                        index of account
-  -M M                  number of goods
-  -L L                  length of bidding vector
-  -s STAKE, --stake STAKE
-                        minimum stake
-  -t TIMEOUT, --timeout TIMEOUT
-                        timeout for each phase
-  -o OUTPUT, --output OUTPUT
-                        contract json for addr and abi
-```
-
-* `--port`: the web3 provider port.
-* `--index`: the index of Ethereum account in the wallet.
-* `-M`: the number of goods the seller wants to sell.
-* `-L`: the length of the bidding vector `V`. The bid upper bound is `2^|V| - 1`.
-* `--stake`: each bidder's minimum stake.
-* `--timeout`: the timeout for each phase.
-* `--output`: the contract address and abi json filename
-
-Example: selling `1` item with bid upper bound `2^8 - 1 = 255`
-
-```
-./seller.py -M 1 -L 8
-```
-
-### 2. Bidder: decides a bid and joins the auction
-```
-usage: bidder.py [-h] [--port PORT] -i INDEX [-c CONTRACT] -b BID
-
-options:
-  -h, --help            show this help message and exit
-  --port PORT           web3 provider port
-  -i INDEX, --index INDEX
-                        index of account
-  -c CONTRACT, --contract CONTRACT
-                        contract addr and abi json
-  -b BID, --bid BID     bidding price
-```
-
-* `--port`: the web3 provider port.
-* `--index`: the index of Ethereum account in the wallet.
-* `--contract`: the json file contains contract addr and abi
-* `--bid`: the bidding price.
-
-Example: one bidder bid `10` and another bidder bid `20`
-
-```
-./bidder.py -i 1 -b 10
-./bidder.py -i 2 -b 20
-```
-
-### 3. Benchmark: simulates a seller and multiple bidders at the same time
-```
-usage: benchmark.py [-h] [--port PORT] [-M M] -B B -L L
-
-options:
-  -h, --help   show this help message and exit
-  --port PORT  port
-  -M M         number of goods
-  -B B         number of bidders
-  -L L         bidding vector length
-```
-
-Example: simulate a seller selling `1` item to `5` bidders. The bid upper bound is `2^8 - 1 = 255`
-
-```
-./benchmark -M 1 -B 5 -L 8
-```
-
-
 ## Tutorial
 
 > This tutorial is tested on a Ubuntu 22.04 (LTS) server.
@@ -249,6 +169,8 @@ An example of selling `1` item to `5` bidders with a bid upper bound `2^8 - 1 = 
 ./benchmark.py -M 1 -B 5 -L 8
 ```
 
+> The benchmark can fail if the timeout is too short.
+
 You can also execute the seller and bidder commands in different tabs.
 
 ```
@@ -259,6 +181,85 @@ You can also execute the seller and bidder commands in different tabs.
 ./bidder.py -i 3 -b 30
 ./bidder.py -i 4 -b 40
 ./bidder.py -i 5 -b 50
+```
+
+## Usage
+
+### 1. Seller: configures and deploys the Smart Contract
+```
+usage: seller.py [-h] [--port PORT] [-i INDEX] [-M M] -L L [-s STAKE] [-t TIMEOUT] [-o OUTPUT]
+
+options:
+  -h, --help            show this help message and exit
+  --port PORT           web3 provider port
+  -i INDEX, --index INDEX
+                        index of account
+  -M M                  number of goods
+  -L L                  length of bidding vector
+  -s STAKE, --stake STAKE
+                        minimum stake
+  -t TIMEOUT, --timeout TIMEOUT
+                        timeout for each phase
+  -o OUTPUT, --output OUTPUT
+                        contract json for addr and abi
+```
+
+* `--port`: the web3 provider port.
+* `--index`: the index of Ethereum account in the wallet.
+* `-M`: the number of goods the seller wants to sell.
+* `-L`: the length of the bidding vector `V`. The bid upper bound is `2^|V| - 1`.
+* `--stake`: each bidder's minimum stake.
+* `--timeout`: the timeout for each phase.
+* `--output`: the contract address and abi json filename
+
+Example: selling `1` item with bid upper bound `2^8 - 1 = 255`
+
+```
+./seller.py -M 1 -L 8
+```
+
+### 2. Bidder: decides a bid and joins the auction
+```
+usage: bidder.py [-h] [--port PORT] -i INDEX [-c CONTRACT] -b BID
+
+options:
+  -h, --help            show this help message and exit
+  --port PORT           web3 provider port
+  -i INDEX, --index INDEX
+                        index of account
+  -c CONTRACT, --contract CONTRACT
+                        contract addr and abi json
+  -b BID, --bid BID     bidding price
+```
+
+* `--port`: the web3 provider port.
+* `--index`: the index of Ethereum account in the wallet.
+* `--contract`: the json file contains contract addr and abi
+* `--bid`: the bidding price.
+
+Example: one bidder bid `10` and another bidder bid `20`
+
+```
+./bidder.py -i 1 -b 10
+./bidder.py -i 2 -b 20
+```
+
+### 3. Benchmark: simulates a seller and multiple bidders at the same time
+```
+usage: benchmark.py [-h] [--port PORT] [-M M] -B B -L L
+
+options:
+  -h, --help   show this help message and exit
+  --port PORT  port
+  -M M         number of goods
+  -B B         number of bidders
+  -L L         bidding vector length
+```
+
+Example: simulate a seller selling `1` item to `5` bidders. The bid upper bound is `2^8 - 1 = 255`
+
+```
+./benchmark -M 1 -B 5 -L 8
 ```
 
 ## Contributions
