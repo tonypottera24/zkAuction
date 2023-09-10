@@ -244,8 +244,6 @@ Please follow the instructions on the official website [ganache-cli](https://git
 
 ### Step 5. Start benchmark
 
-The codes in `contract.py` use the `solc` (Solidity compiler) downloaded by `py-solc-x` to compile the Smart Contract and deploy the compiled binary to the `ganache-cli` (Ethereum simulator).
-
 An example of selling `1` item to `5` bidders with a bid upper bound `2^8 - 1 = 255` is
 ```
 ./benchmark.py -M 1 -B 5 -L 8
