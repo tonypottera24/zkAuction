@@ -30,10 +30,10 @@ contract Auction {
     ECPoint public pk;
     uint256 public M;
     uint256 public L;
-    uint256[7] successCount;
+    uint256[5] successCount;
     uint256 public minimumStake;
     bool public auctionAborted;
-    Timer[7] public timer;
+    Timer[5] public timer;
     uint64 public phase;
     uint256[] public m1stPrice;
     ECPoint[] public zM;
@@ -54,7 +54,7 @@ contract Auction {
     constructor(
         uint256 _M,
         uint256 _L,
-        uint256[7] memory _timeout,
+        uint256[5] memory _timeout,
         uint256 _minimumStake
     ) {
         sellerAddr = msg.sender;
@@ -317,7 +317,6 @@ contract Auction {
                 }
             }
         } else if (phase == 3) {
-            // NOTE: fix this
             if (phase3MixSuccess() == false) {
                 for (uint256 i = 0; i < bList.length(); i++) {
                     if (bList.get(i).hasSubmitMixedWS == false) {
@@ -336,13 +335,11 @@ contract Auction {
                         bList.get(i).isMalicious = true;
                     }
                 }
-            }
+            } else revert("cannot resolve");
         } else if (phase == 4) {
             require(phase4Success() == false, "phase4Success() == true");
             require(successCount[4] == 0, "There are still some winners.");
-        } else {
-            revert("phase out of range");
-        }
+        } else revert("phase out of range");
         returnAllStake();
         auctionAborted = true;
     }

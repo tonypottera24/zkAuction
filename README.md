@@ -51,26 +51,90 @@ The conference version is the same as the `DSC2021` branch. Please read the foll
 
 ## Usage
 
+### Seller config and deploy the Smart Contract
 ```
-usage: main.py [-h] [--port PORT] -M M -B BIDDER -L L
+usage: seller.py [-h] [--port PORT] [-i INDEX] [-M M] -L L [-s STAKE] [-t TIMEOUT] [-o OUTPUT]
+
+options:
+  -h, --help            show this help message and exit
+  --port PORT           web3 provider port
+  -i INDEX, --index INDEX
+                        index of account
+  -M M                  number of goods
+  -L L                  length of bidding vector
+  -s STAKE, --stake STAKE
+                        minimum stake
+  -t TIMEOUT, --timeout TIMEOUT
+                        timeout for each phase
+  -o OUTPUT, --output OUTPUT
+                        contract json for addr and abi
 ```
 
-* `--port`: the port of the Ethereum simulator RPC
+* `--port`: the web3 provider port.
+* `--index`: the index of Ethereum account in the wallet.
 * `-M`: the number of goods the seller wants to sell.
-* `-B`: the number of bidders you want to simulate.
 * `-L`: the length of the bidding vector `V`. The bid upper bound is `2^|V| - 1`.
+* `--stake`: each bidder's minimum stake.
+* `--timeout`: the timeout for each phase.
+* `--output`: the contract address and abi json filename
 
-An example of selling `1` item to `10`` bidders with bid upper bound `2^32 - 1 = 4294967295` is
+Example: selling `1` item with bid upper bound `2^8 - 1 = 255`
 
 ```
-./main.py -M 1 -B 10 -L 32
+./seller.py -M 1 -L 8
 ```
+
+### Bidder decides a bid and join the auction
+```
+usage: bidder.py [-h] [--port PORT] -i INDEX [-c CONTRACT] -b BID
+
+options:
+  -h, --help            show this help message and exit
+  --port PORT           web3 provider port
+  -i INDEX, --index INDEX
+                        index of account
+  -c CONTRACT, --contract CONTRACT
+                        contract addr and abi json
+  -b BID, --bid BID     bidding price
+```
+
+* `--port`: the web3 provider port.
+* `--index`: the index of Ethereum account in the wallet.
+* `--contract`: the json file contains contract addr and abi
+* `--bid`: the bidding price.
+
+Example: one bidder bid `10` and another bidder bid `20`
+
+```
+./bidder.py -i 1 -b 10
+./bidder.py -i 2 -b 20
+```
+
+### We provide a script to automate the benchmark
+```
+usage: benchmark.py [-h] [--port PORT] [-M M] -B B -L L
+
+options:
+  -h, --help   show this help message and exit
+  --port PORT  port
+  -M M         number of goods
+  -B B         number of bidders
+  -L L         bidding vector length
+```
+
+Example: simulate a seller selling `1` item to `5` bidders. The bid upper bound is `2^8 - 1 = 255`
+
+```
+./benchmark -M 1 -B 5 -L 8
+```
+
 
 ## Tutorial
 
 > This tutorial is tested on a Ubuntu 22.04 (LTS) server.
 
-In this tutorial, we demonstrate how to deploy the auction Smart Contract to an Ethereum simulator [ganache-cli](https://github.com/trufflesuite/ganache) and use our [Python Web3 Client](https://github.com/tonypottera24/m-1st_auction_sol) to benchmark the gas usage.
+There are two roles in our auction protocol. A seller and multiple bidders.
+We provide an example of how to use our [Python Web3 Client](https://github.com/tonypottera24/m-1st_auction_py) to simulate a seller and multiple bidders to interact with our Smart Contract.
 
 This tutorial includes 5 steps.
 * Step 1. Download the Smart Contract and our web3 client
@@ -169,11 +233,12 @@ Please follow the instructions on the official website [ganache-cli](https://git
     ```
 3. Start the `ganache-cli`.
     ```
-    ganache-cli --miner.defaultGasPrice 1 --miner.blockGasLimit 0xfffffffffff --miner.callGasLimit 0xfffffffffff -a 1000
+    ganache-cli --miner.defaultGasPrice 1 --miner.blockGasLimit 0xfffffffffff --miner.callGasLimit 0xfffffffffff --miner.blockTime 1 -a 1000
     ```
     * `--miner.defaultGasPrice` can set the gas price.
     * `--miner.blockGasLimit` can increase the gas limit of a block.
     * `--miner.callGasLimit` can increase the gas limit of a function call.
+    * `--miner.blockTime` generate a new block per second.
     * `-a` can set the number of accounts simulated.
     * `--logging.debug` shows all debug messages (optional)
 
@@ -181,11 +246,22 @@ Please follow the instructions on the official website [ganache-cli](https://git
 
 The codes in `contract.py` use the `solc` (Solidity compiler) downloaded by `py-solc-x` to compile the Smart Contract and deploy the compiled binary to the `ganache-cli` (Ethereum simulator).
 
-An example of selling `1` item to `10` bidders with a bid upper bound `2^10 - 1 = 1023` is
+An example of selling `1` item to `5` bidders with a bid upper bound `2^8 - 1 = 255` is
 ```
-./main.py -M 1 -B 10 -L 10
+./benchmark.py -M 1 -B 5 -L 8
 ```
 
+You can also execute the seller and bidder commands in different tabs.
+
+```
+./seller.py -M 1 -L 8
+
+./bidder.py -i 1 -b 10
+./bidder.py -i 2 -b 20
+./bidder.py -i 3 -b 30
+./bidder.py -i 4 -b 40
+./bidder.py -i 5 -b 50
+```
 
 ## Contributions
 
