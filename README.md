@@ -53,8 +53,7 @@ The conference version is the same as the `DSC2021` branch. Please read the foll
 
 > This tutorial is tested on a Ubuntu 22.04 (LTS) server.
 
-There are two roles in our auction protocol. A seller and multiple bidders.
-We provide an example of how to use our [Python Web3 Client](https://github.com/tonypottera24/m-1st_auction_py) to simulate a seller and multiple bidders to interact with our Smart Contract.
+In this tutorial, we demonstrate how to deploy the auction Smart Contract to an Ethereum simulator [ganache-cli](https://github.com/trufflesuite/ganache) and use our [Python Web3 Client](https://github.com/tonypottera24/m-1st_auction_py) to benchmark the gas usage.
 
 This tutorial includes 5 steps.
 * Step 1. Download the Smart Contract and our web3 client
