@@ -60,7 +60,7 @@ This tutorial includes 5 steps.
 * Step 2. Install the Python virtual environment (optional)
 * Step 3. Install the Solidity compiler
 * Step 4. Install the Ethereum simulator
-* Step 5. Start benchmark
+* Step 5. How to use seller.py, bidder.py and benchmark.py
 
 ### Step 1. Download the Smart Contract and our web3 client
 
@@ -161,7 +161,7 @@ Please follow the instructions on the official website [ganache-cli](https://git
     * `-a` can set the number of accounts simulated.
     * `--logging.debug` shows all debug messages (optional)
 
-### Step 5. Start benchmark
+### Step 5. How to use seller.py, bidder.py and benchmark.py
 
 An example of selling `1` item to `5` bidders with a bid upper bound `2^8 - 1 = 255` is
 ```
