@@ -1,4 +1,4 @@
-# Smart Contract based M+1st-Price Sealed-bid Auction
+# zkAuction: Constant Time Multi-Item Sealed-Bid Auction on Blockchain
 
 In NFT, PoS, Cross-Chain Communication and DEX, a Vickrey auction is proven (the prover won a Nobel prize) to increase the seller's income and the bidder pays their true valuation. The bidder with the highest bid wins and pays the second-highest price for the goods.
 Google Ads used a Vickrey auction but migrated to an English auction because it is not easy to achieve public verifiability on the second price.
