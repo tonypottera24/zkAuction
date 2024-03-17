@@ -1,4 +1,3 @@
-from typing import Tuple
 from lib.ct_01_proof import Ct01Proof
 from random import randrange
 from lib.same_dl_proof import SameDLProof
@@ -28,10 +27,17 @@ class Ct:
         return cls(u, c, t=t, r=r)
 
     def __add__(self, other):
-        return Ct(self.u + other.u, self.c + other.c, t=(self.t + other.t) % ECPoint.q, r=(self.r + other.r) % ECPoint.q)
+        return Ct(
+            self.u + other.u, self.c + other.c, t=(self.t + other.t) % ECPoint.q, r=(self.r + other.r) % ECPoint.q
+        )
 
     def __sub__(self, other):
-        return Ct(self.u - other.u, self.c - other.c, t=(self.t - other.t + ECPoint.q) % ECPoint.q, r=(self.r - other.r + ECPoint.q) % ECPoint.q)
+        return Ct(
+            self.u - other.u,
+            self.c - other.c,
+            t=(self.t - other.t + ECPoint.q) % ECPoint.q,
+            r=(self.r - other.r + ECPoint.q) % ECPoint.q,
+        )
 
     def __mul__(self, scalar: int):
         u = self.u * scalar

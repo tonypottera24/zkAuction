@@ -148,7 +148,7 @@ Please follow the instructions on the official website [ganache-cli](https://git
     ```
 2. Install the `ganache-cli` package.
     ```
-    npm install -g ganache
+    sudo npm install -g ganache
     ```
 3. Start the `ganache-cli`.
     ```
